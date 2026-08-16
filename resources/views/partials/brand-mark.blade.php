@@ -1,29 +1,25 @@
 @php
     /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
-    $name = $error->brand('name');
-    $logo = $error->brand('logo');
-    $logoDark = $error->brand('logo_dark');
-    $height = (int) $error->brand('logo_height', 32);
-    $showName = (bool) $error->brand('show_name_beside_logo', false);
+    $branding = $error->branding;
 @endphp
 
-@if ($logo)
-    <img src="{{ $logo }}"
-         alt="{{ $name ?? '' }}"
-         height="{{ $height }}"
-         style="height: {{ $height }}px"
-         @class(['ep-brand--light' => (bool) $logoDark])>
+@if ($branding->logo)
+    <img src="{{ $branding->logo }}"
+         alt="{{ $branding->name ?? '' }}"
+         height="{{ $branding->logoHeight }}"
+         style="height: {{ $branding->logoHeight }}px"
+         @class(['ep-brand--light' => (bool) $branding->logoDark])>
 
-    @if ($logoDark)
+    @if ($branding->logoDark)
         {{-- Swapped by the theme rules in the inline stylesheet. --}}
-        <img src="{{ $logoDark }}"
-             alt="{{ $name ?? '' }}"
-             height="{{ $height }}"
-             style="height: {{ $height }}px"
+        <img src="{{ $branding->logoDark }}"
+             alt="{{ $branding->name ?? '' }}"
+             height="{{ $branding->logoHeight }}"
+             style="height: {{ $branding->logoHeight }}px"
              class="ep-brand--dark">
     @endif
 @endif
 
-@if ($name && (! $logo || $showName))
-    <span>{{ $name }}</span>
+@if ($branding->name && (! $branding->logo || $branding->showNameBesideLogo))
+    <span>{{ $branding->name }}</span>
 @endif

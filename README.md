@@ -303,12 +303,86 @@ Requests that expect JSON get the same information in a machine-readable shape:
 }
 ```
 
-## Customising
+## Customising the views
 
-### Your own view for one status code
+```bash
+php artisan vendor:publish --tag=error-pages-views
+```
 
-Publish the views and add `resources/views/vendor/error-pages/errors/404.blade.php`.
-It is picked up automatically and receives the same `$error` context.
+Every blade file lands in `resources/views/vendor/error-pages/`. Laravel's
+namespaced view finder checks that directory first, so a published file wins
+immediately — no config, no registration. Delete a file to fall back to the
+packaged version.
+
+```
+resources/views/vendor/error-pages/
+├── error.blade.php               ← the standalone page
+├── embedded.blade.php            ← the card inside your own layout
+├── preview.blade.php
+├── preview-modal.blade.php
+└── partials/
+    ├── card.blade.php            ← header, blocks, actions, meta, details
+    ├── styles.blade.php          ← the entire inline stylesheet
+    ├── brand.blade.php
+    ├── brand-mark.blade.php
+    ├── actions.blade.php         ← the CTA buttons
+    ├── meta.blade.php            ← message number / request ID chips
+    ├── retry.blade.php           ← the countdown block
+    ├── details.blade.php         ← the 5xx exception block
+    ├── scripts.blade.php         ← copy buttons + countdown
+    └── livewire-script.blade.php ← the pop-up handler
+```
+
+There are three levels of override, and you pick the smallest one that does the
+job:
+
+**One partial.** Change the meta chips and keep everything else:
+
+```blade
+{{-- resources/views/vendor/error-pages/partials/meta.blade.php --}}
+<div class="my-meta">{{ $error->messageNumber }}</div>
+```
+
+**The whole page.** Replace `error.blade.php` and lay the page out yourself:
+
+```blade
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>{{ $error->statusCode }} — {{ $error->title }}</h1>
+    <p>{{ $error->message }}</p>
+
+    @foreach ($error->actions() as $action)
+        <a href="{{ $action->url }}">{{ $action->label }}</a>
+    @endforeach
+</body>
+</html>
+```
+
+**One status code.** Add `errors/{code}.blade.php` under the published
+directory and only that status gets the bespoke page:
+
+```blade
+{{-- resources/views/vendor/error-pages/errors/404.blade.php --}}
+<h1>Bespoke 404 — {{ $error->title }}</h1>
+```
+
+Every view receives the same `$error` object
+(`Vvdboogaard\ErrorPages\Data\ErrorContext`):
+
+| Property | What it holds |
+|---|---|
+| `$error->statusCode` | `404` |
+| `$error->title` / `->message` | translated headline and lead |
+| `$error->reason` / `->explanation` | the "what happened" block |
+| `$error->suggestions` | `list<string>` |
+| `$error->actions()` | `list<ErrorAction>` — `label`, `url`, `icon`, `style`, `behaviour` |
+| `$error->messageNumber` / `->requestId` | the quotable codes |
+| `$error->retryAt` / `->retryInSeconds()` | the retry moment |
+| `$error->details` | `ExceptionDetails` or null |
+| `$error->branding` | `Branding` — `name`, `logo`, `homeUrl`, `supportEmail`, … |
+| `$error->palette` | resolved colour tokens for both schemes |
+| `$error->copyReport()` | the plain-text support report |
 
 ### The error inside your own layout
 
@@ -319,7 +393,90 @@ It is picked up automatically and receives the same `$error` context.
 The card is then rendered into your layout's `content` section instead of as a
 standalone document.
 
-### Keeping Laravel's behaviour
+## Extending
+
+Every moving part is bound by contract, so you replace one piece from your own
+`AppServiceProvider` and the rest of the package keeps working around it.
+
+| Contract | Default | Replace it when |
+|---|---|---|
+| `MessageNumberGenerator` | `MessageNumber` | you already have an incident-code scheme |
+| `RequestIdResolver` | `RequestId` | your APM assigns the id |
+| `RetryAfterResolver` | `RetryAfter` | the moment comes from a deploy window or queue depth |
+| `BrandingResolver` | `ConfigBranding` | branding is per tenant, not per app |
+| `ActionResolver` | `ActionFactory` | the buttons depend on runtime state |
+| `ErrorContextBuilder` | `ErrorContextFactory` | the copy lives in a CMS, not in lang files |
+| `ErrorRenderer` | `ErrorPageRenderer` | you want different take-over rules |
+
+The multi-tenant case, which is the one that comes up most:
+
+```php
+use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
+use Vvdboogaard\ErrorPages\Data\Branding;
+
+class TenantBranding implements BrandingResolver
+{
+    public function resolve(Request $request, int $statusCode): Branding
+    {
+        $tenant = Tenant::forHost($request->getHost());
+
+        return new Branding(
+            name: $tenant?->name,
+            logo: $tenant?->logo_url,
+            primaryColor: $tenant?->brand_colour,
+            homeUrl: $tenant?->url,
+            supportEmail: $statusCode >= 500 ? $tenant?->support_email : null,
+        );
+    }
+}
+```
+
+```php
+// AppServiceProvider::register()
+$this->app->bind(BrandingResolver::class, TenantBranding::class);
+```
+
+The concrete classes stay bound under their own names, so you can decorate the
+default instead of replacing it wholesale:
+
+```php
+$this->app->bind(BrandingResolver::class, fn ($app) => new class ($app->make(ConfigBranding::class)) implements BrandingResolver {
+    public function __construct(private ConfigBranding $inner) {}
+
+    public function resolve(Request $request, int $status): Branding
+    {
+        return $this->inner->resolve($request, $status)->with(primaryColor: tenant()->colour);
+    }
+});
+```
+
+`ErrorContextFactory` and `ErrorPageRenderer` are non-final with protected
+methods throughout, so subclassing one method is often enough:
+
+```php
+class CopyFromCms extends ErrorContextFactory
+{
+    protected function optionalLine(int $status, string $key, ?string $number, Branding $branding): ?string
+    {
+        return Cms::line($status, $key) ?? parent::optionalLine($status, $key, $number, $branding);
+    }
+}
+```
+
+### Custom icons
+
+Icons are SVG path data, so they are registered rather than configured:
+
+```php
+// AppServiceProvider::boot()
+Icons::register('acme-mark', 'M12 2 2 22h20L12 2z');
+Icons::useForStatus(404, 'acme-mark');
+```
+
+Registering an existing name replaces that bundled Heroicon everywhere. Any
+registered name can then be used from the `actions` config.
+
+## Keeping Laravel's behaviour
 
 `resources/views/errors/404.blade.php` in your application wins — the package
 steps aside for any error view you wrote yourself. Turn that off with

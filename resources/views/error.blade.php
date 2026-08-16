@@ -2,7 +2,7 @@
     /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
     $locale = str_replace('_', '-', $error->locale);
     $direction = in_array(substr($locale, 0, 2), ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr';
-    $brandName = $error->brand('name');
+    $brandName = $error->branding->name;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $direction }}">

@@ -13,7 +13,7 @@ use Illuminate\Support\HtmlString;
  * has to render when the asset pipeline, the CDN or the network is exactly what
  * is broken. Zero external requests is the whole point.
  */
-final class Icons
+class Icons
 {
     /**
      * Raw `<path>` markup per icon, drawn on a 24×24 viewBox.
@@ -85,9 +85,60 @@ final class Icons
         504 => 'signal-slash',
     ];
 
+    /**
+     * Icons added at runtime, and status-icon overrides. Both are how you get a
+     * brand glyph onto the page without forking this class.
+     *
+     * @var array<string, string>
+     */
+    private static array $custom = [];
+
+    /** @var array<int, string> */
+    private static array $statusOverrides = [];
+
+    /**
+     * Register an icon by name and 24×24 `<path>` data.
+     *
+     *     Icons::register('acme-logo', 'M12 2 2 22h20L12 2z');
+     *
+     * Registering an existing name replaces it, which is how you swap one of the
+     * bundled Heroicons for your own.
+     */
+    public static function register(string $name, string $path): void
+    {
+        self::$custom[$name] = $path;
+    }
+
+    /**
+     * @param  array<string, string>  $icons
+     */
+    public static function registerMany(array $icons): void
+    {
+        foreach ($icons as $name => $path) {
+            self::register($name, $path);
+        }
+    }
+
+    /**
+     * Use $name for $status instead of the bundled default.
+     */
+    public static function useForStatus(int $status, string $name): void
+    {
+        self::$statusOverrides[$status] = $name;
+    }
+
+    /**
+     * Drop every runtime registration. Mainly for test isolation.
+     */
+    public static function flush(): void
+    {
+        self::$custom = [];
+        self::$statusOverrides = [];
+    }
+
     public static function exists(string $name): bool
     {
-        return array_key_exists($name, self::PATHS);
+        return array_key_exists($name, self::$custom) || array_key_exists($name, self::PATHS);
     }
 
     /**
@@ -95,11 +146,18 @@ final class Icons
      */
     public static function names(): array
     {
-        return array_keys(self::PATHS);
+        return array_values(array_unique([
+            ...array_keys(self::PATHS),
+            ...array_keys(self::$custom),
+        ]));
     }
 
     public static function forStatus(int $status): string
     {
+        if (isset(self::$statusOverrides[$status]) && self::exists(self::$statusOverrides[$status])) {
+            return self::$statusOverrides[$status];
+        }
+
         if (isset(self::STATUS_ICONS[$status])) {
             return self::STATUS_ICONS[$status];
         }
@@ -114,7 +172,7 @@ final class Icons
      */
     public static function svg(string $name, array $attributes = []): HtmlString
     {
-        $path = self::PATHS[$name] ?? self::PATHS['exclamation-circle'];
+        $path = self::path($name);
 
         $defaults = [
             'xmlns' => 'http://www.w3.org/2000/svg',
@@ -148,6 +206,6 @@ final class Icons
      */
     public static function path(string $name): string
     {
-        return self::PATHS[$name] ?? self::PATHS['exclamation-circle'];
+        return self::$custom[$name] ?? self::PATHS[$name] ?? self::PATHS['exclamation-circle'];
     }
 }

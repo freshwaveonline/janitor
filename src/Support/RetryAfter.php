@@ -9,6 +9,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
+use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
 
 /**
  * Works out when the visitor may sensibly try again.
@@ -19,7 +20,7 @@ use Throwable;
  *   3. `MaintenanceModeException::$willBeAvailableAt`
  *   4. `Retry-After` already present on the request's own response headers
  */
-final class RetryAfter
+class RetryAfter implements RetryAfterResolver
 {
     /**
      * @param  array{enabled?: bool, max_seconds?: int|null, headers?: list<string>}  $config

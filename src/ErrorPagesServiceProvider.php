@@ -15,9 +15,18 @@ use Livewire\Livewire;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
 use Vvdboogaard\ErrorPages\Console\InstallCommand;
+use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
+use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
+use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
+use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
+use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
+use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
+use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
 use Vvdboogaard\ErrorPages\Http\Controllers\PreviewController;
 use Vvdboogaard\ErrorPages\Http\Middleware\AssignRequestId;
 use Vvdboogaard\ErrorPages\Http\Middleware\InjectErrorPagesAssets;
+use Vvdboogaard\ErrorPages\Support\ActionFactory;
+use Vvdboogaard\ErrorPages\Support\ConfigBranding;
 use Vvdboogaard\ErrorPages\Support\MessageNumber;
 use Vvdboogaard\ErrorPages\Support\RequestId;
 use Vvdboogaard\ErrorPages\Support\RetryAfter;
@@ -28,6 +37,14 @@ class ErrorPagesServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/error-pages.php', 'error-pages');
 
+        // Everything is bound by contract. Rebinding any one of these in your
+        // own AppServiceProvider replaces that piece and leaves the rest alone:
+        //
+        //     $this->app->bind(MessageNumberGenerator::class, MyIncidentCodes::class);
+        //     $this->app->bind(BrandingResolver::class, TenantBranding::class);
+        //
+        // The concrete classes stay bound under their own names too, so you can
+        // decorate the default rather than replace it.
         $this->app->singleton(MessageNumber::class, function ($app): MessageNumber {
             /** @var array<string, mixed> $config */
             $config = $app->make(Config::class)->get('error-pages.message_number', []);
@@ -52,8 +69,19 @@ class ErrorPagesServiceProvider extends ServiceProvider
             return new RetryAfter($config);
         });
 
+        $this->app->singleton(ConfigBranding::class);
+        $this->app->singleton(ActionFactory::class);
         $this->app->singleton(ErrorContextFactory::class);
         $this->app->singleton(ErrorPageRenderer::class);
+
+        $this->app->bind(MessageNumberGenerator::class, MessageNumber::class);
+        $this->app->bind(RequestIdResolver::class, RequestId::class);
+        $this->app->bind(RetryAfterResolver::class, RetryAfter::class);
+        $this->app->bind(BrandingResolver::class, ConfigBranding::class);
+        $this->app->bind(ActionResolver::class, ActionFactory::class);
+        $this->app->bind(ErrorContextBuilder::class, ErrorContextFactory::class);
+        $this->app->bind(ErrorRenderer::class, ErrorPageRenderer::class);
+
         $this->app->alias(ErrorPageRenderer::class, 'error-pages');
     }
 
@@ -105,7 +133,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
 
         if (method_exists($handler, 'renderable')) {
             $handler->renderable(function (Throwable $exception, Request $request): ?SymfonyResponse {
-                return $this->app->make(ErrorPageRenderer::class)->render($request, $exception);
+                return $this->app->make(ErrorRenderer::class)->render($request, $exception);
             });
         }
 
@@ -117,8 +145,8 @@ class ErrorPagesServiceProvider extends ServiceProvider
                 $context = [];
 
                 try {
-                    $numbers = $this->app->make(MessageNumber::class);
-                    $status = $this->app->make(ErrorPageRenderer::class)->statusFor($exception);
+                    $numbers = $this->app->make(MessageNumberGenerator::class);
+                    $status = $this->app->make(ErrorRenderer::class)->statusFor($exception);
 
                     $number = $numbers->for($exception, $status);
 
@@ -127,7 +155,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
                     }
 
                     if ($this->app->bound('request')) {
-                        $requestId = $this->app->make(RequestId::class)->resolve($this->app->make('request'));
+                        $requestId = $this->app->make(RequestIdResolver::class)->resolve($this->app->make('request'));
 
                         if ($requestId !== null) {
                             $context['request_id'] = $requestId;

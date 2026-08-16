@@ -474,6 +474,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Extending
+    |--------------------------------------------------------------------------
+    |
+    | Nothing here is config, but this is where you will look for it.
+    |
+    | Every moving part is bound by contract, so you replace one piece from your
+    | own AppServiceProvider without touching the rest:
+    |
+    |   $this->app->bind(MessageNumberGenerator::class, MyIncidentCodes::class);
+    |   $this->app->bind(BrandingResolver::class, TenantBranding::class);
+    |   $this->app->bind(RequestIdResolver::class, ApmTraceId::class);
+    |   $this->app->bind(RetryAfterResolver::class, DeployWindow::class);
+    |   $this->app->bind(ActionResolver::class, CartAwareActions::class);
+    |   $this->app->bind(ErrorContextBuilder::class, CopyFromCms::class);
+    |   $this->app->bind(ErrorRenderer::class, MyRenderer::class);
+    |
+    | The concrete classes stay bound under their own names, so you can decorate
+    | the default rather than replace it:
+    |
+    |   $this->app->bind(BrandingResolver::class, fn ($app) =>
+    |       new TenantBranding($app->make(ConfigBranding::class)));
+    |
+    | Custom icons are registered at runtime rather than configured, because they
+    | are SVG path data:
+    |
+    |   Icons::register('acme-mark', 'M12 2 2 22h20L12 2z');
+    |   Icons::useForStatus(404, 'acme-mark');
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
     | Miscellaneous
     |--------------------------------------------------------------------------
     */

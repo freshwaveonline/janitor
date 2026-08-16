@@ -57,10 +57,10 @@
     @include('error-pages::partials.details')
 </main>
 
-@if ($error->supportEmail)
+@if ($error->branding->supportEmail)
     <p class="ep-support">
         <span>{{ __('error-pages::ui.headings.support') }}</span>
-        <a href="{{ $error->supportMailto(config('error-pages.links.support_subject')) }}">{{ $error->supportEmail }}</a>
+        <a href="{{ $error->supportMailto(config('error-pages.links.support_subject')) }}">{{ $error->branding->supportEmail }}</a>
         @if ($error->messageNumber)
             <span>{{ __('error-pages::ui.support.with_number', ['number' => $error->messageNumber]) }}</span>
         @endif

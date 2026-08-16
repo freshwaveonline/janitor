@@ -24,7 +24,6 @@ final class ErrorContext implements Arrayable
     /**
      * @param  list<string>  $suggestions
      * @param  list<ErrorAction>  $actions
-     * @param  array<string, mixed>  $brand
      */
     public function __construct(
         public readonly int $statusCode,
@@ -39,8 +38,7 @@ final class ErrorContext implements Arrayable
         public readonly ?CarbonInterface $retryAt,
         public readonly ?ExceptionDetails $details,
         public readonly array $actions,
-        public readonly array $brand,
-        public readonly ?string $supportEmail,
+        public readonly Branding $branding,
         public readonly Palette $palette,
         public readonly Theme $theme,
         public readonly CarbonInterface $occurredAt,
@@ -76,9 +74,13 @@ final class ErrorContext implements Arrayable
         return $this->actions;
     }
 
-    public function brand(string $key, mixed $default = null): mixed
+    /**
+     * The support address for this status, or null when support should not be
+     * offered here.
+     */
+    public function supportEmail(): ?string
     {
-        return $this->brand[$key] ?? $default;
+        return $this->branding->supportEmail;
     }
 
     /**
@@ -87,12 +89,12 @@ final class ErrorContext implements Arrayable
      */
     public function supportMailto(?string $subjectTemplate = null): ?string
     {
-        if ($this->supportEmail === null) {
+        if ($this->branding->supportEmail === null) {
             return null;
         }
 
         $subject = strtr($subjectTemplate ?? '[:brand] :status — :message_number', [
-            ':brand' => (string) $this->brand('name', ''),
+            ':brand' => (string) ($this->branding->name ?? ''),
             ':status' => (string) $this->statusCode,
             ':message_number' => $this->messageNumber ?? '—',
         ]);
@@ -108,7 +110,7 @@ final class ErrorContext implements Arrayable
             '',
         ]));
 
-        return 'mailto:'.$this->supportEmail
+        return 'mailto:'.$this->branding->supportEmail
             .'?subject='.rawurlencode(trim($subject))
             .'&body='.rawurlencode($body);
     }
@@ -192,6 +194,7 @@ final class ErrorContext implements Arrayable
             'actions' => array_map(static fn (ErrorAction $action): array => $action->toArray(), $this->actions),
             'details' => $this->details?->toArray(),
             'occurred_at' => $this->occurredAt->toIso8601String(),
+            'branding' => $this->branding->toArray(),
         ];
     }
 }

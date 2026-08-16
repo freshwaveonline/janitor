@@ -15,11 +15,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Throwable;
+use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
+use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
 use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
 use Vvdboogaard\ErrorPages\Enums\ModalPosition;
 use Vvdboogaard\ErrorPages\Enums\Theme;
-use Vvdboogaard\ErrorPages\ErrorContextFactory;
-use Vvdboogaard\ErrorPages\ErrorPageRenderer;
 
 /**
  * Design against every error state without provoking real errors.
@@ -39,8 +39,8 @@ class PreviewController
     public function __construct(
         private readonly Config $config,
         private readonly ViewFactory $views,
-        private readonly ErrorContextFactory $factory,
-        private readonly ErrorPageRenderer $renderer,
+        private readonly ErrorContextBuilder $factory,
+        private readonly ErrorRenderer $renderer,
     ) {}
 
     public function index(Request $request): View

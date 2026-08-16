@@ -7,6 +7,7 @@ namespace Vvdboogaard\ErrorPages\Tests;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Vvdboogaard\ErrorPages\ErrorPagesServiceProvider;
 use Vvdboogaard\ErrorPages\Integrations\Filament;
+use Vvdboogaard\ErrorPages\Support\Icons;
 
 abstract class TestCase extends Orchestra
 {
@@ -14,14 +15,15 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
 
-        // Filament memoises its own absence; reset so one test's fake cannot
-        // leak into the next.
+        // Both keep static state; reset so one test cannot leak into the next.
         Filament::fake(null);
+        Icons::flush();
     }
 
     protected function tearDown(): void
     {
         Filament::fake(null);
+        Icons::flush();
 
         parent::tearDown();
     }

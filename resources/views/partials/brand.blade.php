@@ -1,9 +1,9 @@
 @php
     /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
-    $brandHome = collect($error->actions())->firstWhere('key', 'home')?->url;
+    $brandHome = $error->branding->homeUrl;
 @endphp
 
-@if ($error->brand('logo') || $error->brand('name'))
+@if ($error->branding->hasMark())
     @if ($brandHome)
         <a class="ep-brand" href="{{ $brandHome }}">@include('error-pages::partials.brand-mark')</a>
     @else

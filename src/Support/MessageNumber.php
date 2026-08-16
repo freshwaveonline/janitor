@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vvdboogaard\ErrorPages\Support;
 
 use Throwable;
+use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
 use Vvdboogaard\ErrorPages\Enums\MessageNumberAlphabet;
 use Vvdboogaard\ErrorPages\Enums\OriginStrategy;
 
@@ -19,7 +20,7 @@ use Vvdboogaard\ErrorPages\Enums\OriginStrategy;
  * Absolute paths are stripped to project-relative paths first, otherwise the
  * number would change whenever the deploy directory changes (`releases/1234`).
  */
-final class MessageNumber
+class MessageNumber implements MessageNumberGenerator
 {
     /**
      * @param  array{

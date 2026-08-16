@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace Vvdboogaard\ErrorPages\Support;
 
+use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
+use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
 use Vvdboogaard\ErrorPages\Data\ErrorAction;
-use Vvdboogaard\ErrorPages\Integrations\Filament;
+use Vvdboogaard\ErrorPages\Data\ErrorContext;
 
 /**
- * Builds the call-to-action buttons for a status code.
+ * Builds the call-to-action buttons for a status code from config.
  *
  * An action that cannot resolve — no support address configured, no `login`
  * route, no retry moment — removes itself rather than rendering a dead button.
  */
-final class ActionFactory
+class ActionFactory implements ActionResolver
 {
     /**
-     * Default appearance per built-in action, before the "first one is primary"
+     * Default appearance per built-in action, before the "exactly one primary"
      * promotion runs.
      *
      * @var array<string, array{icon: string, style: string, behaviour: string}>
      */
-    private const BUILT_INS = [
+    protected const BUILT_INS = [
         'home' => ['icon' => 'home', 'style' => ErrorAction::STYLE_PRIMARY, 'behaviour' => 'link'],
         'back' => ['icon' => 'arrow-left', 'style' => ErrorAction::STYLE_SECONDARY, 'behaviour' => 'back'],
         'reload' => ['icon' => 'arrow-path', 'style' => ErrorAction::STYLE_PRIMARY, 'behaviour' => 'reload'],
@@ -35,26 +36,22 @@ final class ActionFactory
         'status_page' => ['icon' => 'globe-alt', 'style' => ErrorAction::STYLE_GHOST, 'behaviour' => 'link'],
     ];
 
-    /**
-     * @param  array<string, mixed>  $config
-     */
     public function __construct(
-        private readonly array $config,
-        private readonly Translator $translator,
+        protected readonly Config $config,
+        protected readonly Translator $translator,
     ) {}
 
     /**
-     * @param  array{home_url?: string|null, login_url?: string|null, support_mailto?: string|null, has_retry?: bool}  $resolved
      * @return list<ErrorAction>
      */
-    public function for(int $statusCode, array $resolved, ?Request $request = null): array
+    public function for(ErrorContext $context, Request $request): array
     {
         $actions = [];
 
-        foreach ($this->keysFor($statusCode) as $definition) {
+        foreach ($this->definitionsFor($context->statusCode) as $definition) {
             $action = is_array($definition)
                 ? $this->custom($definition)
-                : $this->builtIn((string) $definition, $resolved, $request);
+                : $this->builtIn((string) $definition, $context);
 
             if ($action !== null) {
                 $actions[$action->key] = $action;
@@ -65,26 +62,12 @@ final class ActionFactory
     }
 
     /**
-     * Resolve the URLs the built-in actions depend on.
-     *
-     * @param  array<string, mixed>  $config
-     * @return array{home_url: string|null, login_url: string|null}
-     */
-    public static function resolveUrls(array $config, ?Request $request = null): array
-    {
-        return [
-            'home_url' => self::resolveHomeUrl($config, $request),
-            'login_url' => self::resolveLoginUrl($config, $request),
-        ];
-    }
-
-    /**
      * @return list<string|array<string, mixed>>
      */
-    private function keysFor(int $statusCode): array
+    protected function definitionsFor(int $statusCode): array
     {
         /** @var array<array-key, mixed> $map */
-        $map = $this->config['actions'] ?? [];
+        $map = $this->setting('actions') ?? [];
 
         $definitions = $map[$statusCode] ?? $map['default'] ?? ['back', 'home'];
 
@@ -92,67 +75,38 @@ final class ActionFactory
         return is_array($definitions) ? array_values($definitions) : [];
     }
 
-    /**
-     * @param  array{home_url?: string|null, login_url?: string|null, support_mailto?: string|null, has_retry?: bool}  $resolved
-     */
-    private function builtIn(string $key, array $resolved, ?Request $request): ?ErrorAction
+    protected function builtIn(string $key, ErrorContext $context): ?ErrorAction
     {
-        $preset = self::BUILT_INS[$key] ?? null;
+        $preset = static::BUILT_INS[$key] ?? null;
 
         if ($preset === null) {
             return null;
         }
 
-        $url = null;
+        $branding = $context->branding;
         $external = false;
 
-        switch ($key) {
-            case 'home':
-                $url = $resolved['home_url'] ?? null;
+        $url = match ($key) {
+            'home' => $branding->homeUrl,
+            'login' => $branding->loginUrl,
+            'support' => $context->supportMailto($this->string('links.support_subject')),
+            'status_page' => $branding->statusPageUrl,
+            default => null,
+        };
 
-                if ($url === null) {
-                    return null;
-                }
+        // Link-style actions with nothing to link to are dead buttons.
+        if ($preset['behaviour'] === 'link' && $url === null) {
+            return null;
+        }
 
-                break;
+        if ($key === 'status_page') {
+            $external = true;
+        }
 
-            case 'login':
-                $url = $resolved['login_url'] ?? null;
-
-                if ($url === null) {
-                    return null;
-                }
-
-                break;
-
-            case 'support':
-                $url = $resolved['support_mailto'] ?? null;
-
-                if ($url === null) {
-                    return null;
-                }
-
-                break;
-
-            case 'status_page':
-                $url = $this->stringConfig('links.status_page');
-
-                if ($url === null) {
-                    return null;
-                }
-
-                $external = true;
-
-                break;
-
-            case 'retry':
-                // Without a retry moment this is just a reload button with the
-                // wrong label; let the configured 'reload' action cover that.
-                if (($resolved['has_retry'] ?? false) === false) {
-                    return null;
-                }
-
-                break;
+        // Without a retry moment this is just a reload button with the wrong
+        // label; the configured 'reload' action covers that case.
+        if ($key === 'retry' && ! $context->hasRetry()) {
+            return null;
         }
 
         return new ErrorAction(
@@ -170,7 +124,7 @@ final class ActionFactory
     /**
      * @param  array<string, mixed>  $definition
      */
-    private function custom(array $definition): ?ErrorAction
+    protected function custom(array $definition): ?ErrorAction
     {
         $label = $definition['label'] ?? null;
 
@@ -186,7 +140,7 @@ final class ActionFactory
         }
 
         // Route names are more portable than hard-coded URLs in a config file.
-        if (is_string($url) && ! str_contains($url, '/') && $this->router()->has($url)) {
+        if (is_string($url) && ! str_contains($url, '/') && Route::has($url)) {
             $url = route($url);
         }
 
@@ -202,7 +156,7 @@ final class ActionFactory
                 ? (string) $style
                 : ErrorAction::STYLE_SECONDARY,
             behaviour: $behaviour,
-            external: (bool) ($definition['external'] ?? false),
+            external: ($definition['external'] ?? false) === true,
         );
     }
 
@@ -213,7 +167,7 @@ final class ActionFactory
      * @param  list<ErrorAction>  $actions
      * @return list<ErrorAction>
      */
-    private function promotePrimary(array $actions): array
+    protected function promotePrimary(array $actions): array
     {
         if ($actions === []) {
             return $actions;
@@ -222,8 +176,8 @@ final class ActionFactory
         $primaryIndex = null;
 
         foreach ($actions as $index => $action) {
-            if ($action->isPrimary()) {
-                $primaryIndex = $primaryIndex ?? $index;
+            if ($action->isPrimary() && $primaryIndex === null) {
+                $primaryIndex = $index;
             }
         }
 
@@ -252,90 +206,20 @@ final class ActionFactory
         ));
     }
 
-    private function label(string $key): string
+    protected function label(string $key): string
     {
         return (string) $this->translator->get('error-pages::ui.actions.'.$key);
     }
 
-    private function stringConfig(string $path): ?string
+    protected function setting(string $key, mixed $default = null): mixed
     {
-        $value = data_get($this->config, $path);
-
-        return is_string($value) && $value !== '' ? $value : null;
+        return $this->config->get('error-pages.'.$key, $default);
     }
 
-    private function router(): Router
+    protected function string(string $key): ?string
     {
-        return Route::getFacadeRoot();
-    }
+        $value = $this->setting($key);
 
-    /**
-     * @param  array<string, mixed>  $config
-     */
-    private static function resolveHomeUrl(array $config, ?Request $request): ?string
-    {
-        $explicit = data_get($config, 'links.home');
-
-        if (is_string($explicit) && $explicit !== '') {
-            return $explicit;
-        }
-
-        $routeName = data_get($config, 'links.home_route');
-
-        if (is_string($routeName) && $routeName !== '' && Route::has($routeName)) {
-            return route($routeName);
-        }
-
-        if (self::filamentEnabled($config, $request, 'home_url')) {
-            $url = Filament::homeUrl($request);
-
-            if ($url !== null) {
-                return $url;
-            }
-        }
-
-        return url('/');
-    }
-
-    /**
-     * @param  array<string, mixed>  $config
-     */
-    private static function resolveLoginUrl(array $config, ?Request $request): ?string
-    {
-        if (self::filamentEnabled($config, $request, 'login_url')) {
-            $url = Filament::loginUrl($request);
-
-            if ($url !== null) {
-                return $url;
-            }
-        }
-
-        $routeName = data_get($config, 'links.login_route');
-
-        if (is_string($routeName) && $routeName !== '' && Route::has($routeName)) {
-            return route($routeName);
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<string, mixed>  $config
-     */
-    private static function filamentEnabled(array $config, ?Request $request, string $feature): bool
-    {
-        if (! Filament::installed() || data_get($config, 'filament.enabled') !== true) {
-            return false;
-        }
-
-        if (data_get($config, 'filament.inherit.'.$feature) !== true) {
-            return false;
-        }
-
-        if (data_get($config, 'filament.only_on_panel_routes') === true) {
-            return $request !== null && Filament::isPanelRequest($request);
-        }
-
-        return true;
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 }

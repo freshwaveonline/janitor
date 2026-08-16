@@ -6,6 +6,7 @@ namespace Vvdboogaard\ErrorPages\Support;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
 
 /**
  * Resolves the correlation id for the current request.
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
  * one we generate it ourselves, which still lets a user quote an id that
  * matches the application log for that exact request.
  */
-final class RequestId
+class RequestId implements RequestIdResolver
 {
     public const ATTRIBUTE = 'error-pages.request_id';
 

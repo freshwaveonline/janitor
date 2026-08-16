@@ -31,5 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON responses carrying the same message number and request ID for API clients.
 - A preview route at `/_error-pages` for designing against every state.
 - `error-pages:install` command.
+- **Contracts for every moving part** — `MessageNumberGenerator`,
+  `RequestIdResolver`, `RetryAfterResolver`, `BrandingResolver`,
+  `ActionResolver`, `ErrorContextBuilder` and `ErrorRenderer` — each bound to a
+  default implementation and replaceable with a single container binding. The
+  concrete classes stay bound under their own names so the default can be
+  decorated rather than replaced.
+- `BrandingResolver` and the `Branding` value object, so a multi-tenant
+  application can supply name, logo, colour, URLs and support address from its
+  own tenant record in one method.
+- Runtime icon registry: `Icons::register()`, `Icons::registerMany()` and
+  `Icons::useForStatus()` add brand glyphs or replace bundled Heroicons.
+- Publishable views at three override levels: the whole page, a single partial,
+  or one status code via `errors/{code}.blade.php`.
 
 [Unreleased]: https://github.com/vvdboogaard/laravel-error-pages/commits/main

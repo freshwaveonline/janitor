@@ -7,7 +7,7 @@ namespace Vvdboogaard\ErrorPages\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Vvdboogaard\ErrorPages\Support\RequestId;
+use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
 
 /**
  * Assigns the correlation id at the very start of the request.
@@ -18,7 +18,7 @@ use Vvdboogaard\ErrorPages\Support\RequestId;
  */
 class AssignRequestId
 {
-    public function __construct(private readonly RequestId $requestId) {}
+    public function __construct(private readonly RequestIdResolver $requestId) {}
 
     public function handle(Request $request, Closure $next): Response
     {

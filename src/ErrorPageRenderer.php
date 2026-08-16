@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
+use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
+use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
 use Vvdboogaard\ErrorPages\Data\ErrorContext;
 use Vvdboogaard\ErrorPages\Enums\LivewireErrorMode;
 use Vvdboogaard\ErrorPages\Support\Icons;
@@ -26,13 +28,13 @@ use Vvdboogaard\ErrorPages\Support\Icons;
  * returning null anywhere below hands the exception straight back to the
  * framework — the safe default whenever we are unsure.
  */
-class ErrorPageRenderer
+class ErrorPageRenderer implements ErrorRenderer
 {
     public function __construct(
         protected readonly Application $app,
         protected readonly Config $config,
         protected readonly ViewFactory $views,
-        protected readonly ErrorContextFactory $factory,
+        protected readonly ErrorContextBuilder $factory,
     ) {}
 
     public function render(Request $request, Throwable $exception): ?SymfonyResponse
