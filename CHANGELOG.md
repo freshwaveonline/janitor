@@ -5,7 +5,11 @@ All notable changes to `janitor` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.1] - 2026-08-16
+## [v1.0.0](https://github.com/freshwaveonline/janitor/releases/tag/v0.0.1/compare/v0.0.1...v1.0.0) - 2026-08-16
+
+**Full Changelog**: https://github.com/freshwaveonline/janitor/commits/v1.0.0
+
+## [0.0.1](https://github.com/freshwaveonline/janitor/releases/tag/v0.0.1) - 2026-08-16
 
 First release. The API may still change while the package is at `0.0.x`.
 
@@ -56,5 +60,3 @@ First release. The API may still change while the package is at `0.0.x`.
   `Icons::useForStatus()` add brand glyphs or replace bundled Heroicons.
 - Publishable views at three override levels: the whole page, a single partial,
   or one status code via `errors/{code}.blade.php`.
-
-[0.0.1]: https://github.com/freshwaveonline/janitor/releases/tag/v0.0.1
