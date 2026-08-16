@@ -10,7 +10,7 @@
 
 Please **do not open a public issue** for a security problem.
 
-Email **vincent@wemakeitspark.nl** with a description of the issue, the steps to
+Email **mail@freshwave.online** with a description of the issue, the steps to
 reproduce it, and the affected version. You will get an acknowledgement within a
 few working days, and a fix or an explanation of why it is not one.
 

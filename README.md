@@ -621,7 +621,7 @@ both the lowest and the highest resolvable dependencies.
 
 ## Security
 
-If you discover a security issue, email vincent@wemakeitspark.nl rather than
+If you discover a security issue, email mail@freshwave.online rather than
 opening a public issue.
 
 ## Credits
