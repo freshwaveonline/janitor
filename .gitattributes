@@ -14,3 +14,5 @@
 /phpstan-baseline.neon export-ignore
 /pint.json          export-ignore
 /CHANGELOG.md       export-ignore
+/CONTRIBUTING.md    export-ignore
+/SECURITY.md        export-ignore

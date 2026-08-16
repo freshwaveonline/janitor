@@ -18,6 +18,11 @@
             "role": "Developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/vvdboogaard/laravel-error-pages/issues",
+        "source": "https://github.com/vvdboogaard/laravel-error-pages",
+        "docs": "https://github.com/vvdboogaard/laravel-error-pages#readme"
+    },
     "require": {
         "php": "^8.2",
         "illuminate/contracts": "^11.0|^12.0",

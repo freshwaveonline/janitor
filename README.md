@@ -54,18 +54,18 @@ exact error in your logs.
 
 **Requirements:** PHP 8.2+, Laravel 11 or 12.
 
-### From Packagist
-
-Once the package is published on [Packagist](https://packagist.org):
-
 ```bash
 composer require vvdboogaard/laravel-error-pages
 ```
 
-### From a private repository
+The package registers itself through Laravel's auto-discovery and starts
+rendering immediately.
 
-While the repository is private it is not on Packagist, so point Composer at the
-repository directly. In the **consuming application's** `composer.json`:
+<details>
+<summary><strong>Installing from a private fork or a mirror</strong></summary>
+
+If you run this from a repository of your own rather than from Packagist, point
+Composer at it directly. In the **consuming application's** `composer.json`:
 
 ```json
 {
@@ -93,12 +93,14 @@ or SSH, by using `git@github.com:vvdboogaard/laravel-error-pages.git` as the
 `url` and relying on your existing SSH key. On a deploy server, use a machine
 user or a deploy key rather than a personal token.
 
-Before the first tag exists, require the branch instead — `dev-main` is aliased
-to `1.0.x-dev`, so `^1.0` already resolves against it:
+Before a tag exists, require the branch instead — `dev-main` is aliased to
+`1.0.x-dev`, so `^1.0` already resolves against it:
 
 ```bash
 composer require vvdboogaard/laravel-error-pages:dev-main
 ```
+
+</details>
 
 ### For local development
 
@@ -123,27 +125,20 @@ composer require vvdboogaard/laravel-error-pages:@dev
 
 ### Releasing a version
 
-Composer resolves versions from git tags, so a package with no tags can only be
-installed as `dev-main`. To cut a release:
+Composer resolves versions from git tags, so cutting a release is a tag:
 
 ```bash
-git checkout main
-git merge --no-ff claude/laravel-error-pages-package-u7ptqo
-git push origin main
-
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Pushing the tag runs the `release` workflow, which validates `composer.json`,
-runs the suite, and publishes a GitHub release with generated notes. If the
-package is on Packagist, add the Packagist webhook (or install the Packagist
-GitHub App) so new tags appear automatically.
+That runs the `release` workflow, which validates `composer.json`, runs the
+suite and publishes a GitHub release with generated notes. The Packagist GitHub
+App picks the tag up from there.
 
----
+## Configuring
 
-Installation is the whole setup — the package registers itself through Laravel's
-auto-discovery and starts rendering immediately. To tune it, publish the config:
+To tune the package, publish the config:
 
 ```bash
 php artisan error-pages:install
