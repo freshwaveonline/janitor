@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout the default branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
 
@@ -25,7 +25,7 @@ jobs:
           release-notes: ${{ github.event.release.body }}
 
       - name: Commit the changelog
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
           commit_message: 'docs: update CHANGELOG for ${{ github.event.release.tag_name }}'
