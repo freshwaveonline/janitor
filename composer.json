@@ -70,6 +70,9 @@
             "aliases": {
                 "ErrorPages": "Vvdboogaard\\ErrorPages\\Facades\\ErrorPages"
             }
+        },
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
         }
     },
     "minimum-stability": "stable",
