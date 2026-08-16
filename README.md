@@ -56,6 +56,9 @@ exact error in your logs.
 
 **Requirements:** PHP 8.2+, Laravel 11 or 12.
 
+> Janitor is at `0.0.x`. It is tested and in use, but the API may still change
+> between releases — pin an exact version if that matters to you.
+
 ```bash
 composer require freshwaveonline/janitor
 ```
@@ -81,7 +84,7 @@ Composer at it directly. In the **consuming application's** `composer.json`:
 ```
 
 ```bash
-composer require freshwaveonline/janitor:^1.0
+composer require freshwaveonline/janitor:^0.0.1
 ```
 
 Composer needs credentials for the private repository. Either a GitHub token
@@ -95,8 +98,8 @@ or SSH, by using `git@github.com:freshwaveonline/janitor.git` as the
 `url` and relying on your existing SSH key. On a deploy server, use a machine
 user or a deploy key rather than a personal token.
 
-Before a tag exists, require the branch instead — `dev-main` is aliased to
-`1.0.x-dev`, so `^1.0` already resolves against it:
+To track the branch rather than a release, require it directly — `dev-main` is
+aliased to `0.0.x-dev`:
 
 ```bash
 composer require freshwaveonline/janitor:dev-main
@@ -130,8 +133,8 @@ composer require freshwaveonline/janitor:@dev
 Composer resolves versions from git tags, so cutting a release is a tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v0.0.2
+git push origin v0.0.2
 ```
 
 That runs the `release` workflow, which validates `composer.json`, runs the

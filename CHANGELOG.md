@@ -5,7 +5,9 @@ All notable changes to `janitor` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.1] - 2026-08-16
+
+First release. The API may still change while the package is at `0.0.x`.
 
 ### Changed
 
@@ -55,4 +57,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Publishable views at three override levels: the whole page, a single partial,
   or one status code via `errors/{code}.blade.php`.
 
-[Unreleased]: https://github.com/freshwaveonline/janitor/commits/main
+[0.0.1]: https://github.com/freshwaveonline/janitor/releases/tag/v0.0.1
