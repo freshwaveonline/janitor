@@ -35,8 +35,8 @@
         }
 
         function flashCopied(button) {
-            var label = button.querySelector('.ep-chip__label') || button.querySelector('span');
-            var confirmation = button.getAttribute('data-ep-copy-label') || 'Copied';
+            var label = button.querySelector('.jn-chip__label') || button.querySelector('span');
+            var confirmation = button.getAttribute('data-jn-copy-label') || 'Copied';
 
             if (!label || button.hasAttribute('data-copied')) {
                 return;
@@ -53,16 +53,16 @@
         }
 
         document.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-ep-copy], [data-ep-copy-from]');
+            var trigger = event.target.closest('[data-jn-copy], [data-jn-copy-from]');
 
             if (!trigger) {
                 return;
             }
 
-            var text = trigger.getAttribute('data-ep-copy');
+            var text = trigger.getAttribute('data-jn-copy');
 
             if (text === null) {
-                var source = document.querySelector(trigger.getAttribute('data-ep-copy-from'));
+                var source = document.querySelector(trigger.getAttribute('data-jn-copy-from'));
 
                 if (!source) {
                     return;
@@ -87,14 +87,14 @@
         /* -------------------------------------------------------- actions */
 
         document.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-ep-action]');
+            var trigger = event.target.closest('[data-jn-action]');
 
             if (!trigger) {
                 return;
             }
 
             event.preventDefault();
-            var action = trigger.getAttribute('data-ep-action');
+            var action = trigger.getAttribute('data-jn-action');
 
             if (action === 'reload') {
                 window.location.reload();
@@ -111,7 +111,7 @@
                     return;
                 }
 
-                var home = document.querySelector('[data-ep-home]');
+                var home = document.querySelector('[data-jn-home]');
 
                 if (home) {
                     window.location.href = home.getAttribute('href');
@@ -133,7 +133,7 @@
         }
 
         function holdRetryButtons() {
-            document.querySelectorAll('[data-ep-wait-for-retry]').forEach(function (button) {
+            document.querySelectorAll('[data-jn-wait-for-retry]').forEach(function (button) {
                 if (button.tagName === 'BUTTON') {
                     button.setAttribute('disabled', 'disabled');
                 }
@@ -143,22 +143,22 @@
         }
 
         function releaseRetryButtons() {
-            document.querySelectorAll('[data-ep-wait-for-retry]').forEach(function (button) {
+            document.querySelectorAll('[data-jn-wait-for-retry]').forEach(function (button) {
                 button.removeAttribute('disabled');
                 button.removeAttribute('aria-disabled');
-                button.removeAttribute('data-ep-wait-for-retry');
+                button.removeAttribute('data-jn-wait-for-retry');
             });
         }
 
-        document.querySelectorAll('[data-ep-countdown]').forEach(function (element) {
-            var target = Date.parse(element.getAttribute('data-ep-countdown'));
+        document.querySelectorAll('[data-jn-countdown]').forEach(function (element) {
+            var target = Date.parse(element.getAttribute('data-jn-countdown'));
 
             if (isNaN(target)) {
                 return;
             }
 
-            var doneText = element.getAttribute('data-ep-countdown-now') || '';
-            var shouldReload = element.getAttribute('data-ep-countdown-reload') === 'true';
+            var doneText = element.getAttribute('data-jn-countdown-now') || '';
+            var shouldReload = element.getAttribute('data-jn-countdown-reload') === 'true';
 
             var tick = function () {
                 var remaining = Math.max(0, Math.round((target - Date.now()) / 1000));

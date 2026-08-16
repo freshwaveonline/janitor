@@ -1,5 +1,5 @@
 @php
-    /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
+    /** @var \FreshwaveOnline\Janitor\Data\ErrorContext $error */
     /** @var array<string, mixed> $payload */
 @endphp
 <!DOCTYPE html>
@@ -9,41 +9,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Pop-up preview — {{ $error->statusCode }}</title>
-    @include('error-pages::partials.styles')
+    @include('janitor::partials.styles')
     <style>
         body { justify-content: flex-start; }
-        .ep-shell { max-width: 40rem; }
+        .jn-shell { max-width: 40rem; }
     </style>
 </head>
 <body>
-    <div class="ep-shell">
-        <main class="ep-card">
-            <div class="ep-heading">
-                <p class="ep-status"><b>Pop-up preview</b></p>
-                <h1 class="ep-title">{{ $error->statusCode }} — {{ $error->title }}</h1>
-                <p class="ep-lead">
+    <div class="jn-shell">
+        <main class="jn-card">
+            <div class="jn-heading">
+                <p class="jn-status"><b>Pop-up preview</b></p>
+                <h1 class="jn-title">{{ $error->statusCode }} — {{ $error->title }}</h1>
+                <p class="jn-lead">
                     This is what a Livewire round-trip failure looks like. The page underneath keeps
                     its state; only the pop-up appears.
                 </p>
             </div>
 
-            <div class="ep-actions">
-                <button type="button" class="ep-btn ep-btn--primary" id="ep-preview-show">Show pop-up</button>
-                <a class="ep-btn ep-btn--secondary" href="?">Full page instead</a>
+            <div class="jn-actions">
+                <button type="button" class="jn-btn jn-btn--primary" id="jn-preview-show">Show pop-up</button>
+                <a class="jn-btn jn-btn--secondary" href="?">Full page instead</a>
             </div>
         </main>
     </div>
 
-    @include('error-pages::partials.livewire-script')
+    @include('janitor::partials.livewire-script')
 
     <script>
         (function () {
             var payload = @json($payload);
 
-            document.getElementById('ep-preview-show').addEventListener('click', function () {
+            document.getElementById('jn-preview-show').addEventListener('click', function () {
                 // The handler exposes no public API, so the preview drives it the
                 // same way Livewire does: through a failed request payload.
-                document.dispatchEvent(new CustomEvent('ep-preview', { detail: payload }));
+                document.dispatchEvent(new CustomEvent('jn-preview', { detail: payload }));
             });
         })();
     </script>

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Vvdboogaard\ErrorPages\Enums\Theme;
-use Vvdboogaard\ErrorPages\Support\Color;
-use Vvdboogaard\ErrorPages\Support\Palette;
+use FreshwaveOnline\Janitor\Enums\Theme;
+use FreshwaveOnline\Janitor\Support\Color;
+use FreshwaveOnline\Janitor\Support\Palette;
 
 it('parses every colour notation a config might contain', function (string $input, string $expected): void {
     expect(Color::parse($input)?->toHex())->toBe($expected);
@@ -83,8 +83,8 @@ it('falls back to the default primary when the configured value is unusable', fu
 it('renders custom properties as CSS declarations', function (): void {
     $css = Palette::fromConfig(['primary' => '#4f46e5'], Theme::Auto)->declarations('light');
 
-    expect($css)->toContain('--ep-primary:')
-        ->and($css)->toContain('--ep-text:')
+    expect($css)->toContain('--jn-primary:')
+        ->and($css)->toContain('--jn-text:')
         ->and($css)->toEndWith(';');
 });
 

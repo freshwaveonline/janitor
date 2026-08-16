@@ -1,11 +1,21 @@
 # Changelog
 
-All notable changes to `laravel-error-pages` are documented here.
+All notable changes to `janitor` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+
+- The package moved to the `freshwaveonline` organisation and was renamed to
+  **Janitor**. Nothing was released under the old name, so there is no upgrade
+  path to follow — but for anyone who tracked the branch, everything moved at
+  once: package `freshwaveonline/janitor`, namespace `FreshwaveOnline\Janitor\`,
+  config `config/janitor.php`, views and translations `janitor::`, environment
+  variables `JANITOR_*`, command `janitor:install`, preview route `/_janitor`,
+  facade `Janitor`, and the CSS prefix `jn-`.
 
 ### Added
 
@@ -29,8 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - English and Dutch translations, publishable and overridable.
 - A copyable technical block on 5xx errors, gated per environment.
 - JSON responses carrying the same message number and request ID for API clients.
-- A preview route at `/_error-pages` for designing against every state.
-- `error-pages:install` command.
+- A preview route at `/_janitor` for designing against every state.
+- `janitor:install` command.
 - **Contracts for every moving part** — `MessageNumberGenerator`,
   `RequestIdResolver`, `RetryAfterResolver`, `BrandingResolver`,
   `ActionResolver`, `ErrorContextBuilder` and `ErrorRenderer` — each bound to a
@@ -45,4 +55,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Publishable views at three override levels: the whole page, a single partial,
   or one status code via `errors/{code}.blade.php`.
 
-[Unreleased]: https://github.com/vvdboogaard/laravel-error-pages/commits/main
+[Unreleased]: https://github.com/freshwaveonline/janitor/commits/main

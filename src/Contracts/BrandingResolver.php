@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Contracts;
+namespace FreshwaveOnline\Janitor\Contracts;
 
+use FreshwaveOnline\Janitor\Data\Branding;
 use Illuminate\Http\Request;
-use Vvdboogaard\ErrorPages\Data\Branding;
 
 /**
  * Decides whose application the visitor is looking at.

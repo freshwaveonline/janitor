@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use FreshwaveOnline\Janitor\Contracts\RetryAfterResolver;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
-use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
 
 /**
  * Works out when the visitor may sensibly try again.
@@ -118,7 +118,7 @@ class RetryAfter implements RetryAfterResolver
         }
 
         /** @var mixed $headers */
-        $headers = $request->attributes->get('error-pages.retry_headers');
+        $headers = $request->attributes->get('janitor.retry_headers');
 
         return is_array($headers) ? $this->fromHeaderBag($headers) : null;
     }

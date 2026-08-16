@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Contracts;
+namespace FreshwaveOnline\Janitor\Contracts;
 
+use FreshwaveOnline\Janitor\Data\ErrorAction;
+use FreshwaveOnline\Janitor\Data\ErrorContext;
 use Illuminate\Http\Request;
-use Vvdboogaard\ErrorPages\Data\ErrorAction;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
 
 /**
  * Builds the call-to-action buttons for an error.

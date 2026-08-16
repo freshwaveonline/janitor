@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Vvdboogaard\ErrorPages\Enums\MessageNumberAlphabet;
-use Vvdboogaard\ErrorPages\Enums\OriginStrategy;
-use Vvdboogaard\ErrorPages\Support\MessageNumber;
+use FreshwaveOnline\Janitor\Enums\MessageNumberAlphabet;
+use FreshwaveOnline\Janitor\Enums\OriginStrategy;
+use FreshwaveOnline\Janitor\Support\MessageNumber;
 
 /**
  * The whole promise of the message number is that it is stable. These tests are

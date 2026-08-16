@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Contracts;
+namespace FreshwaveOnline\Janitor\Contracts;
 
+use FreshwaveOnline\Janitor\Data\ErrorContext;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
 
 /**
  * Decides whether this package renders a given exception, and in which shape.

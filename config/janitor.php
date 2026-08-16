@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Enums\DetailVisibility;
+use FreshwaveOnline\Janitor\Enums\LivewireErrorMode;
+use FreshwaveOnline\Janitor\Enums\MessageNumberAlphabet;
+use FreshwaveOnline\Janitor\Enums\ModalPosition;
+use FreshwaveOnline\Janitor\Enums\OriginStrategy;
+use FreshwaveOnline\Janitor\Enums\Theme;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
-use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
-use Vvdboogaard\ErrorPages\Enums\LivewireErrorMode;
-use Vvdboogaard\ErrorPages\Enums\MessageNumberAlphabet;
-use Vvdboogaard\ErrorPages\Enums\ModalPosition;
-use Vvdboogaard\ErrorPages\Enums\OriginStrategy;
-use Vvdboogaard\ErrorPages\Enums\Theme;
 
 return [
 
@@ -24,7 +24,7 @@ return [
     |
     */
 
-    'enabled' => env('ERROR_PAGES_ENABLED', true),
+    'enabled' => env('JANITOR_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,9 +77,9 @@ return [
     */
 
     'brand' => [
-        'name' => env('ERROR_PAGES_BRAND', null), // null → config('app.name')
-        'logo' => env('ERROR_PAGES_LOGO', null),
-        'logo_dark' => env('ERROR_PAGES_LOGO_DARK', null), // optional dark-mode variant
+        'name' => env('JANITOR_BRAND', null), // null → config('app.name')
+        'logo' => env('JANITOR_LOGO', null),
+        'logo_dark' => env('JANITOR_LOGO_DARK', null), // optional dark-mode variant
         'logo_height' => 32,
         'show_name_beside_logo' => false,
     ],
@@ -103,9 +103,9 @@ return [
     */
 
     'colors' => [
-        'primary' => env('ERROR_PAGES_PRIMARY', '#4f46e5'),
-        'light' => env('ERROR_PAGES_PRIMARY_LIGHT', null),
-        'dark' => env('ERROR_PAGES_PRIMARY_DARK', null),
+        'primary' => env('JANITOR_PRIMARY', '#4f46e5'),
+        'light' => env('JANITOR_PRIMARY_LIGHT', null),
+        'dark' => env('JANITOR_PRIMARY_DARK', null),
         'auto_contrast' => true,
     ],
 
@@ -134,13 +134,13 @@ return [
     */
 
     'links' => [
-        'home' => env('ERROR_PAGES_HOME_URL', null),
-        'home_route' => env('ERROR_PAGES_HOME_ROUTE', null),
+        'home' => env('JANITOR_HOME_URL', null),
+        'home_route' => env('JANITOR_HOME_ROUTE', null),
         'login_route' => 'login',
-        'support_email' => env('ERROR_PAGES_SUPPORT_EMAIL', null),
+        'support_email' => env('JANITOR_SUPPORT_EMAIL', null),
         'support_email_codes' => [401, 402, 403, 423, 500, 501, 502, 503, 504],
         'support_subject' => null, // null → "[:brand] :status — :message_number"
-        'status_page' => env('ERROR_PAGES_STATUS_URL', null),
+        'status_page' => env('JANITOR_STATUS_URL', null),
     ],
 
     /*
@@ -161,7 +161,7 @@ return [
     |       'style' => 'ghost',
     |   ]],
     |
-    | Available icons: see Vvdboogaard\ErrorPages\Support\Icons::names().
+    | Available icons: see FreshwaveOnline\Janitor\Support\Icons::names().
     | Styles: 'primary', 'secondary', 'ghost'.
     |
     */
@@ -234,7 +234,7 @@ return [
 
     'message_number' => [
         'enabled' => true,
-        'prefix' => env('ERROR_PAGES_PREFIX', 'ERR'),
+        'prefix' => env('JANITOR_PREFIX', 'ERR'),
         'separator' => '-',
         'length' => 6,
         'alphabet' => MessageNumberAlphabet::Hex,
@@ -242,7 +242,7 @@ return [
         'origin' => OriginStrategy::Application,
         'include_exception_class' => false,
         'include_status_code' => false,
-        'salt' => env('ERROR_PAGES_SALT', null),
+        'salt' => env('JANITOR_SALT', null),
 
         // Add the message number to the response as `X-Message-Number`.
         'response_header' => 'X-Message-Number',
@@ -335,7 +335,7 @@ return [
     'details' => [
         'visibility' => DetailVisibility::Auto,
         'environments' => ['local', 'development', 'testing', 'staging'],
-        'replace_debug_page' => env('ERROR_PAGES_REPLACE_DEBUG_PAGE', false),
+        'replace_debug_page' => env('JANITOR_REPLACE_DEBUG_PAGE', false),
 
         // Only render the block for these status codes.
         'codes' => [500, 501, 502, 503, 504],
@@ -375,7 +375,7 @@ return [
         'position' => ModalPosition::BottomRight,
 
         // Auto-inject the (≈3 KB, inline) handler into HTML responses. Turn off
-        // and place `@errorPagesScripts` in your layout for full control.
+        // and place `@janitorScripts` in your layout for full control.
         'inject_assets' => true,
 
         // Dismiss the pop-up automatically after N ms. 0 = stay until dismissed.
@@ -443,15 +443,15 @@ return [
     | Preview
     |--------------------------------------------------------------------------
     |
-    | Registers /_error-pages and /_error-pages/{code} so you can design against
+    | Registers /_janitor and /_janitor/{code} so you can design against
     | every state without triggering real errors. Add ?theme=dark to preview the
     | dark surface. Local environment only unless you change this.
     |
     */
 
     'preview' => [
-        'enabled' => env('ERROR_PAGES_PREVIEW', null), // null → only in `local`
-        'path' => '_error-pages',
+        'enabled' => env('JANITOR_PREVIEW', null), // null → only in `local`
+        'path' => '_janitor',
         'middleware' => ['web'],
     ],
 
@@ -460,14 +460,14 @@ return [
     | Views
     |--------------------------------------------------------------------------
     |
-    | Publish with `php artisan vendor:publish --tag=error-pages-views` and the
+    | Publish with `php artisan vendor:publish --tag=janitor-views` and the
     | published copies win. Per-code overrides are picked up automatically:
     | a view named `errors.404` in your app replaces this package's 404 page.
     |
     */
 
     'views' => [
-        'page' => 'error-pages::error',
+        'page' => 'janitor::error',
         'layout' => null, // e.g. 'layouts.app' to embed the error in your own chrome
         'prefer_application_views' => true,
     ],

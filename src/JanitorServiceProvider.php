@@ -2,8 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages;
+namespace FreshwaveOnline\Janitor;
 
+use FreshwaveOnline\Janitor\Console\InstallCommand;
+use FreshwaveOnline\Janitor\Contracts\ActionResolver;
+use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
+use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
+use FreshwaveOnline\Janitor\Contracts\ErrorRenderer;
+use FreshwaveOnline\Janitor\Contracts\MessageNumberGenerator;
+use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
+use FreshwaveOnline\Janitor\Contracts\RetryAfterResolver;
+use FreshwaveOnline\Janitor\Http\Controllers\PreviewController;
+use FreshwaveOnline\Janitor\Http\Middleware\AssignRequestId;
+use FreshwaveOnline\Janitor\Http\Middleware\InjectJanitorAssets;
+use FreshwaveOnline\Janitor\Support\ActionFactory;
+use FreshwaveOnline\Janitor\Support\ConfigBranding;
+use FreshwaveOnline\Janitor\Support\MessageNumber;
+use FreshwaveOnline\Janitor\Support\RequestId;
+use FreshwaveOnline\Janitor\Support\RetryAfter;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -14,28 +30,12 @@ use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
-use Vvdboogaard\ErrorPages\Console\InstallCommand;
-use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
-use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
-use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
-use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
-use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
-use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
-use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
-use Vvdboogaard\ErrorPages\Http\Controllers\PreviewController;
-use Vvdboogaard\ErrorPages\Http\Middleware\AssignRequestId;
-use Vvdboogaard\ErrorPages\Http\Middleware\InjectErrorPagesAssets;
-use Vvdboogaard\ErrorPages\Support\ActionFactory;
-use Vvdboogaard\ErrorPages\Support\ConfigBranding;
-use Vvdboogaard\ErrorPages\Support\MessageNumber;
-use Vvdboogaard\ErrorPages\Support\RequestId;
-use Vvdboogaard\ErrorPages\Support\RetryAfter;
 
-class ErrorPagesServiceProvider extends ServiceProvider
+class JanitorServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/error-pages.php', 'error-pages');
+        $this->mergeConfigFrom(__DIR__.'/../config/janitor.php', 'janitor');
 
         // Everything is bound by contract. Rebinding any one of these in your
         // own AppServiceProvider replaces that piece and leaves the rest alone:
@@ -47,7 +47,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
         // decorate the default rather than replace it.
         $this->app->singleton(MessageNumber::class, function ($app): MessageNumber {
             /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('error-pages.message_number', []);
+            $config = $app->make(Config::class)->get('janitor.message_number', []);
 
             /** @phpstan-ignore-next-line argument.type */
             return new MessageNumber($config, $app->basePath());
@@ -55,7 +55,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
 
         $this->app->singleton(RequestId::class, function ($app): RequestId {
             /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('error-pages.request_id', []);
+            $config = $app->make(Config::class)->get('janitor.request_id', []);
 
             /** @phpstan-ignore-next-line argument.type */
             return new RequestId($config);
@@ -63,7 +63,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
 
         $this->app->singleton(RetryAfter::class, function ($app): RetryAfter {
             /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('error-pages.retry_after', []);
+            $config = $app->make(Config::class)->get('janitor.retry_after', []);
 
             /** @phpstan-ignore-next-line argument.type */
             return new RetryAfter($config);
@@ -82,13 +82,13 @@ class ErrorPagesServiceProvider extends ServiceProvider
         $this->app->bind(ErrorContextBuilder::class, ErrorContextFactory::class);
         $this->app->bind(ErrorRenderer::class, ErrorPageRenderer::class);
 
-        $this->app->alias(ErrorPageRenderer::class, 'error-pages');
+        $this->app->alias(ErrorPageRenderer::class, 'janitor');
     }
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'error-pages');
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'error-pages');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'janitor');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'janitor');
 
         $this->registerPublishing();
         $this->registerBladeDirectives();
@@ -108,16 +108,16 @@ class ErrorPagesServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            __DIR__.'/../config/error-pages.php' => $this->app->configPath('error-pages.php'),
-        ], ['error-pages', 'error-pages-config']);
+            __DIR__.'/../config/janitor.php' => $this->app->configPath('janitor.php'),
+        ], ['janitor', 'janitor-config']);
 
         $this->publishes([
-            __DIR__.'/../resources/views' => $this->app->resourcePath('views/vendor/error-pages'),
-        ], ['error-pages', 'error-pages-views']);
+            __DIR__.'/../resources/views' => $this->app->resourcePath('views/vendor/janitor'),
+        ], ['janitor', 'janitor-views']);
 
         $this->publishes([
-            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/error-pages'),
-        ], ['error-pages', 'error-pages-lang', 'error-pages-translations']);
+            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/janitor'),
+        ], ['janitor', 'janitor-lang', 'janitor-translations']);
     }
 
     /**
@@ -140,7 +140,7 @@ class ErrorPagesServiceProvider extends ServiceProvider
         // Put the message number in the log context so the code on screen can be
         // grepped straight out of the log for that exception.
         if (method_exists($handler, 'buildContextUsing')
-            && $this->app->make(Config::class)->get('error-pages.message_number.log_context') === true) {
+            && $this->app->make(Config::class)->get('janitor.message_number.log_context') === true) {
             $handler->buildContextUsing(function (Throwable $exception): array {
                 $context = [];
 
@@ -174,12 +174,12 @@ class ErrorPagesServiceProvider extends ServiceProvider
     {
         $config = $this->app->make(Config::class);
 
-        if ($config->get('error-pages.request_id.middleware') === true) {
+        if ($config->get('janitor.request_id.middleware') === true) {
             $this->pushGlobalMiddleware(AssignRequestId::class);
         }
 
-        if ($config->get('error-pages.livewire.inject_assets') === true && class_exists(Livewire::class)) {
-            $this->pushGlobalMiddleware(InjectErrorPagesAssets::class);
+        if ($config->get('janitor.livewire.inject_assets') === true && class_exists(Livewire::class)) {
+            $this->pushGlobalMiddleware(InjectJanitorAssets::class);
         }
     }
 
@@ -210,22 +210,22 @@ class ErrorPagesServiceProvider extends ServiceProvider
         }
 
         $config = $this->app->make(Config::class);
-        $path = trim((string) $config->get('error-pages.preview.path', '_error-pages'), '/');
+        $path = trim((string) $config->get('janitor.preview.path', '_janitor'), '/');
 
         /** @var list<string> $middleware */
-        $middleware = $config->get('error-pages.preview.middleware', ['web']);
+        $middleware = $config->get('janitor.preview.middleware', ['web']);
 
         Route::middleware($middleware)->group(function () use ($path): void {
-            Route::get($path, [PreviewController::class, 'index'])->name('error-pages.preview.index');
+            Route::get($path, [PreviewController::class, 'index'])->name('janitor.preview.index');
             Route::get($path.'/{code}', [PreviewController::class, 'show'])
                 ->whereNumber('code')
-                ->name('error-pages.preview.show');
+                ->name('janitor.preview.show');
         });
     }
 
     protected function previewEnabled(): bool
     {
-        $setting = $this->app->make(Config::class)->get('error-pages.preview.enabled');
+        $setting = $this->app->make(Config::class)->get('janitor.preview.enabled');
 
         // `null` means "local only" — the safe default for a route that renders
         // stack traces on demand.
@@ -236,13 +236,13 @@ class ErrorPagesServiceProvider extends ServiceProvider
 
     protected function registerBladeDirectives(): void
     {
-        Blade::directive('errorPagesScripts', static function (): string {
-            return "<?php echo view('error-pages::partials.livewire-script')->render(); ?>";
+        Blade::directive('janitorScripts', static function (): string {
+            return "<?php echo view('janitor::partials.livewire-script')->render(); ?>";
         });
 
-        // `@errorPagesIcon('home', ['class' => 'ep-icon'])`
-        Blade::directive('errorPagesIcon', static function (string $expression): string {
-            return "<?php echo \\Vvdboogaard\\ErrorPages\\Support\\Icons::svg({$expression}); ?>";
+        // `@janitorIcon('home', ['class' => 'jn-icon'])`
+        Blade::directive('janitorIcon', static function (string $expression): string {
+            return "<?php echo \\FreshwaveOnline\\Janitor\\Support\\Icons::svg({$expression}); ?>";
         });
     }
 }

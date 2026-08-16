@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Enums\DetailVisibility;
+use FreshwaveOnline\Janitor\ErrorPageRenderer;
+use FreshwaveOnline\Janitor\Support\Icons;
+use FreshwaveOnline\Janitor\Support\MessageNumber;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
-use Vvdboogaard\ErrorPages\ErrorPageRenderer;
-use Vvdboogaard\ErrorPages\Support\Icons;
-use Vvdboogaard\ErrorPages\Support\MessageNumber;
 
 beforeEach(function (): void {
     Route::middleware('web')->group(function (): void {
@@ -38,7 +38,7 @@ it('echoes an upstream request id back unchanged', function (): void {
 });
 
 it('can use a different response header', function (): void {
-    config()->set('error-pages.request_id.response_header', 'X-Trace-Id');
+    config()->set('janitor.request_id.response_header', 'X-Trace-Id');
 
     $response = $this->get('/missing');
 
@@ -53,11 +53,11 @@ it('can use a different response header', function (): void {
 
 it('registers the package services as singletons', function (): void {
     expect($this->app->make(ErrorPageRenderer::class))->toBe($this->app->make(ErrorPageRenderer::class))
-        ->and($this->app->make('error-pages'))->toBeInstanceOf(ErrorPageRenderer::class);
+        ->and($this->app->make('janitor'))->toBeInstanceOf(ErrorPageRenderer::class);
 });
 
 it('builds the message number generator from config', function (): void {
-    config()->set('error-pages.message_number.prefix', 'ACME');
+    config()->set('janitor.message_number.prefix', 'ACME');
 
     // Singletons are resolved once, so re-bind for the changed config.
     $this->app->forgetInstance(MessageNumber::class);
@@ -69,7 +69,7 @@ it('builds the message number generator from config', function (): void {
 it('publishes the config, views and translations under their own tags', function (): void {
     $groups = ServiceProvider::$publishGroups;
 
-    expect($groups)->toHaveKeys(['error-pages', 'error-pages-config', 'error-pages-views', 'error-pages-lang']);
+    expect($groups)->toHaveKeys(['janitor', 'janitor-config', 'janitor-views', 'janitor-lang']);
 });
 
 /*
@@ -79,11 +79,11 @@ it('publishes the config, views and translations under their own tags', function
 */
 
 it('renders the pop-up handler through the blade directive', function (): void {
-    $this->blade('@errorPagesScripts')->assertSee('ep-modal-root', false);
+    $this->blade('@janitorScripts')->assertSee('jn-modal-root', false);
 });
 
 it('renders an icon through the blade directive', function (): void {
-    $this->blade("@errorPagesIcon('home')")
+    $this->blade("@janitorIcon('home')")
         ->assertSee('<svg', false)
         ->assertSee('aria-hidden="true"', false);
 });
@@ -119,7 +119,7 @@ it('falls back to a generic icon for an unknown name', function (): void {
 it('escapes the exception message before it reaches the page', function (): void {
     Route::middleware('web')->get('/xss', fn () => throw new RuntimeException('<script>alert("xss")</script>'));
 
-    config()->set('error-pages.details.visibility', DetailVisibility::Always);
+    config()->set('janitor.details.visibility', DetailVisibility::Always);
 
     $content = $this->get('/xss')->getContent();
 
@@ -130,7 +130,7 @@ it('escapes the exception message before it reaches the page', function (): void
 it('escapes the copyable report payload', function (): void {
     Route::middleware('web')->get('/xss', fn () => throw new RuntimeException('</script><script>alert(1)</script>'));
 
-    config()->set('error-pages.details.visibility', DetailVisibility::Always);
+    config()->set('janitor.details.visibility', DetailVisibility::Always);
 
     $content = $this->get('/xss')->getContent();
 

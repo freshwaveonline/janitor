@@ -17,8 +17,8 @@ parameters:
             identifier: class.notFound
             paths:
                 - src/Integrations/Filament.php
-                - src/Http/Middleware/InjectErrorPagesAssets.php
-                - src/ErrorPagesServiceProvider.php
+                - src/Http/Middleware/InjectJanitorAssets.php
+                - src/JanitorServiceProvider.php
         -
             identifier: staticMethod.notFound
             path: src/Integrations/Filament.php

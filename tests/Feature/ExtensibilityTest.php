@@ -4,30 +4,30 @@ declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use FreshwaveOnline\Janitor\Contracts\ActionResolver;
+use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
+use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
+use FreshwaveOnline\Janitor\Contracts\ErrorRenderer;
+use FreshwaveOnline\Janitor\Contracts\MessageNumberGenerator;
+use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
+use FreshwaveOnline\Janitor\Contracts\RetryAfterResolver;
+use FreshwaveOnline\Janitor\Data\Branding;
+use FreshwaveOnline\Janitor\Data\ErrorAction;
+use FreshwaveOnline\Janitor\Data\ErrorContext;
+use FreshwaveOnline\Janitor\ErrorContextFactory;
+use FreshwaveOnline\Janitor\ErrorPageRenderer;
+use FreshwaveOnline\Janitor\Support\ActionFactory;
+use FreshwaveOnline\Janitor\Support\ConfigBranding;
+use FreshwaveOnline\Janitor\Support\Icons;
+use FreshwaveOnline\Janitor\Support\MessageNumber;
+use FreshwaveOnline\Janitor\Support\RequestId;
+use FreshwaveOnline\Janitor\Support\RetryAfter;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
-use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
-use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
-use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
-use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
-use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
-use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
-use Vvdboogaard\ErrorPages\Data\Branding;
-use Vvdboogaard\ErrorPages\Data\ErrorAction;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
-use Vvdboogaard\ErrorPages\ErrorContextFactory;
-use Vvdboogaard\ErrorPages\ErrorPageRenderer;
-use Vvdboogaard\ErrorPages\Support\ActionFactory;
-use Vvdboogaard\ErrorPages\Support\ConfigBranding;
-use Vvdboogaard\ErrorPages\Support\Icons;
-use Vvdboogaard\ErrorPages\Support\MessageNumber;
-use Vvdboogaard\ErrorPages\Support\RequestId;
-use Vvdboogaard\ErrorPages\Support\RetryAfter;
 
 /*
 |--------------------------------------------------------------------------
@@ -140,13 +140,13 @@ it('uses a custom branding resolver, the multi-tenant case', function (): void {
 
     $this->get('/missing')
         ->assertSee('Tenant B.V.')
-        ->assertSee('--ep-primary: #b91c1c', false)
+        ->assertSee('--jn-primary: #b91c1c', false)
         ->assertSee('https://tenant.test', false)
         ->assertSee('help@tenant.test');
 });
 
 it('lets a branding resolver decorate the default instead of replacing it', function (): void {
-    config()->set('error-pages.brand.name', 'Acme');
+    config()->set('janitor.brand.name', 'Acme');
 
     $this->app->bind(BrandingResolver::class, fn ($app): BrandingResolver => new class($app->make(ConfigBranding::class)) implements BrandingResolver
     {
@@ -163,7 +163,7 @@ it('lets a branding resolver decorate the default instead of replacing it', func
 
     $this->get('/missing')
         ->assertSee('Acme')
-        ->assertSee('--ep-primary: #0ea5e9', false);
+        ->assertSee('--jn-primary: #0ea5e9', false);
 });
 
 it('uses a custom action resolver for runtime-dependent buttons', function (): void {
@@ -188,7 +188,7 @@ it('uses a custom action resolver for runtime-dependent buttons', function (): v
     $this->get('/missing')
         ->assertSee('Resume your checkout')
         ->assertSee('href="/cart/9f3a"', false)
-        ->assertDontSee('data-ep-action="back"', false);
+        ->assertDontSee('data-jn-action="back"', false);
 });
 
 it('lets a subclass of the factory change where the copy comes from', function (): void {
@@ -256,7 +256,7 @@ it('ignores a status override pointing at an icon that does not exist', function
 it('lets a custom icon be used by a config action', function (): void {
     Icons::register('sparkles', 'M5 3v4M3 5h4');
 
-    config()->set('error-pages.actions.404', [[
+    config()->set('janitor.actions.404', [[
         'label' => 'Try our search',
         'url' => '/search',
         'icon' => 'sparkles',

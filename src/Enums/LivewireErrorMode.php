@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Enums;
+namespace FreshwaveOnline\Janitor\Enums;
 
 /**
  * How an error that occurs during a Livewire round-trip is presented.

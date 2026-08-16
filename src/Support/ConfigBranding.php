@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
+use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
+use FreshwaveOnline\Janitor\Data\Branding;
+use FreshwaveOnline\Janitor\Integrations\Filament;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
-use Vvdboogaard\ErrorPages\Data\Branding;
-use Vvdboogaard\ErrorPages\Integrations\Filament;
 
 /**
  * The default branding source: this package's config, with Filament's active
@@ -159,7 +159,7 @@ class ConfigBranding implements BrandingResolver
 
     protected function setting(string $key, mixed $default = null): mixed
     {
-        return $this->config->get('error-pages.'.$key, $default);
+        return $this->config->get('janitor.'.$key, $default);
     }
 
     protected function string(string $key): ?string

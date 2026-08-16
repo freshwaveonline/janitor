@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Enums;
+namespace FreshwaveOnline\Janitor\Enums;
 
 /**
  * Where the Livewire error pop-up is anchored inside the viewport.
@@ -72,9 +72,9 @@ enum ModalPosition: string
     public function cssVariables(): array
     {
         return [
-            '--ep-modal-align' => $this->alignItems(),
-            '--ep-modal-justify' => $this->justifyContent(),
-            '--ep-modal-enter' => $this->enterTransform(),
+            '--jn-modal-align' => $this->alignItems(),
+            '--jn-modal-justify' => $this->justifyContent(),
+            '--jn-modal-enter' => $this->enterTransform(),
         ];
     }
 

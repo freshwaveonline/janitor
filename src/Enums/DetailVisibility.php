@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Enums;
+namespace FreshwaveOnline\Janitor\Enums;
 
 /**
  * Controls whether the technical exception block is rendered on the page.

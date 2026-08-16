@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Integrations;
+namespace FreshwaveOnline\Janitor\Integrations;
 
+use FreshwaveOnline\Janitor\Support\Color;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Http\Request;
 use Throwable;
-use Vvdboogaard\ErrorPages\Support\Color;
 
 /**
  * Optional Filament bridge.

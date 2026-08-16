@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
 /**
  * Minimal, dependency-free sRGB colour value object.

@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages;
+namespace FreshwaveOnline\Janitor;
 
+use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
+use FreshwaveOnline\Janitor\Contracts\ErrorRenderer;
+use FreshwaveOnline\Janitor\Data\ErrorContext;
+use FreshwaveOnline\Janitor\Enums\LivewireErrorMode;
+use FreshwaveOnline\Janitor\Support\Icons;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Foundation\Application;
@@ -15,11 +20,6 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
-use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
-use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
-use Vvdboogaard\ErrorPages\Enums\LivewireErrorMode;
-use Vvdboogaard\ErrorPages\Support\Icons;
 
 /**
  * Decides whether this package renders a given exception, and in which shape.
@@ -68,7 +68,7 @@ class ErrorPageRenderer implements ErrorRenderer
 
     public function shouldHandle(Request $request, Throwable $exception): bool
     {
-        if ($this->config->get('error-pages.enabled') !== true) {
+        if ($this->config->get('janitor.enabled') !== true) {
             return false;
         }
 
@@ -86,7 +86,7 @@ class ErrorPageRenderer implements ErrorRenderer
         // Opt in via `details.replace_debug_page` to design against these pages.
         if ($status >= 500
             && $this->config->get('app.debug') === true
-            && $this->config->get('error-pages.details.replace_debug_page') !== true) {
+            && $this->config->get('janitor.details.replace_debug_page') !== true) {
             return false;
         }
 
@@ -133,14 +133,14 @@ class ErrorPageRenderer implements ErrorRenderer
             // ships no icon data of its own.
             'icons' => $this->iconPaths($context),
             'labels' => [
-                'message_number' => (string) __('error-pages::ui.meta.message_number'),
-                'request_id' => (string) __('error-pages::ui.meta.request_id'),
-                'copy' => (string) __('error-pages::ui.actions.copy'),
-                'copied' => (string) __('error-pages::ui.actions.copied'),
-                'dismiss' => (string) __('error-pages::ui.actions.dismiss'),
-                'retry_at' => (string) __('error-pages::ui.retry.at'),
-                'retry_in' => (string) __('error-pages::ui.retry.in'),
-                'details' => (string) __('error-pages::ui.details.heading'),
+                'message_number' => (string) __('janitor::ui.meta.message_number'),
+                'request_id' => (string) __('janitor::ui.meta.request_id'),
+                'copy' => (string) __('janitor::ui.actions.copy'),
+                'copied' => (string) __('janitor::ui.actions.copied'),
+                'dismiss' => (string) __('janitor::ui.actions.dismiss'),
+                'retry_at' => (string) __('janitor::ui.retry.at'),
+                'retry_in' => (string) __('janitor::ui.retry.in'),
+                'details' => (string) __('janitor::ui.details.heading'),
             ],
         ];
     }
@@ -152,12 +152,12 @@ class ErrorPageRenderer implements ErrorRenderer
     */
 
     /**
-     * A published `vendor/error-pages/errors/404.blade.php` wins over the
+     * A published `vendor/janitor/errors/404.blade.php` wins over the
      * shared page, so one status code can get a bespoke design.
      */
     public function viewName(int $status): string
     {
-        $specific = "error-pages::errors.{$status}";
+        $specific = "janitor::errors.{$status}";
 
         if ($this->views->exists($specific)) {
             return $specific;
@@ -165,15 +165,15 @@ class ErrorPageRenderer implements ErrorRenderer
 
         // With a layout configured the card is embedded in the application's own
         // chrome rather than rendered as a standalone document.
-        $layout = $this->config->get('error-pages.views.layout');
+        $layout = $this->config->get('janitor.views.layout');
 
         if (is_string($layout) && $layout !== '' && $this->views->exists($layout)) {
-            return 'error-pages::embedded';
+            return 'janitor::embedded';
         }
 
-        $configured = $this->config->get('error-pages.views.page');
+        $configured = $this->config->get('janitor.views.page');
 
-        return is_string($configured) && $configured !== '' ? $configured : 'error-pages::error';
+        return is_string($configured) && $configured !== '' ? $configured : 'janitor::error';
     }
 
     protected function respond(Request $request, ErrorContext $context): SymfonyResponse
@@ -199,7 +199,7 @@ class ErrorPageRenderer implements ErrorRenderer
     protected function isExcludedException(Throwable $exception): bool
     {
         /** @var list<class-string> $excluded */
-        $excluded = $this->config->get('error-pages.except_exceptions', []);
+        $excluded = $this->config->get('janitor.except_exceptions', []);
 
         foreach ($excluded as $class) {
             if (! $exception instanceof $class) {
@@ -225,11 +225,11 @@ class ErrorPageRenderer implements ErrorRenderer
             return false;
         }
 
-        if ($this->config->get('error-pages.handle_missing_login_route') !== true) {
+        if ($this->config->get('janitor.handle_missing_login_route') !== true) {
             return false;
         }
 
-        $route = $this->config->get('error-pages.links.login_route', 'login');
+        $route = $this->config->get('janitor.links.login_route', 'login');
 
         return ! (is_string($route) && $route !== '' && Route::has($route));
     }
@@ -241,14 +241,14 @@ class ErrorPageRenderer implements ErrorRenderer
         }
 
         /** @var list<int> $except */
-        $except = $this->config->get('error-pages.except_codes', []);
+        $except = $this->config->get('janitor.except_codes', []);
 
         if (in_array($status, $except, true)) {
             return false;
         }
 
         /** @var list<int|string> $codes */
-        $codes = $this->config->get('error-pages.codes', ['*']);
+        $codes = $this->config->get('janitor.codes', ['*']);
 
         return in_array('*', $codes, true) || in_array($status, $codes, true);
     }
@@ -259,7 +259,7 @@ class ErrorPageRenderer implements ErrorRenderer
      */
     protected function prefersApplicationView(int $status): bool
     {
-        if ($this->config->get('error-pages.views.prefer_application_views') !== true) {
+        if ($this->config->get('janitor.views.prefer_application_views') !== true) {
             return false;
         }
 
@@ -274,7 +274,7 @@ class ErrorPageRenderer implements ErrorRenderer
 
     protected function wantsJson(Request $request): bool
     {
-        if ($this->config->get('error-pages.json.enabled') !== true) {
+        if ($this->config->get('janitor.json.enabled') !== true) {
             return false;
         }
 
@@ -293,20 +293,20 @@ class ErrorPageRenderer implements ErrorRenderer
             $payload['reason'] = $context->reason;
         }
 
-        if ($this->config->get('error-pages.json.include_message_number') === true && $context->messageNumber !== null) {
+        if ($this->config->get('janitor.json.include_message_number') === true && $context->messageNumber !== null) {
             $payload['message_number'] = $context->messageNumber;
         }
 
-        if ($this->config->get('error-pages.json.include_request_id') === true && $context->requestId !== null) {
+        if ($this->config->get('janitor.json.include_request_id') === true && $context->requestId !== null) {
             $payload['request_id'] = $context->requestId;
         }
 
-        if ($this->config->get('error-pages.json.include_retry_after') === true && $context->retryAt !== null) {
+        if ($this->config->get('janitor.json.include_retry_after') === true && $context->retryAt !== null) {
             $payload['retry_after'] = $context->retryInSeconds();
             $payload['retry_at'] = $context->retryAt->toIso8601String();
         }
 
-        if ($this->config->get('error-pages.json.include_details') === true && $context->details !== null) {
+        if ($this->config->get('janitor.json.include_details') === true && $context->details !== null) {
             $payload['exception'] = $context->details->toArray();
         }
 
@@ -320,7 +320,7 @@ class ErrorPageRenderer implements ErrorRenderer
      */
     protected function livewireResponse(ErrorContext $context): ?SymfonyResponse
     {
-        $mode = LivewireErrorMode::parse($this->config->get('error-pages.livewire.mode'));
+        $mode = LivewireErrorMode::parse($this->config->get('janitor.livewire.mode'));
 
         if ($mode === LivewireErrorMode::Disabled) {
             return null;
@@ -335,7 +335,7 @@ class ErrorPageRenderer implements ErrorRenderer
 
         return new JsonResponse([
             'message' => $context->message,
-            'errorPages' => $this->livewirePayload($context),
+            'janitor' => $this->livewirePayload($context),
         ], $context->statusCode);
     }
 
@@ -394,7 +394,7 @@ class ErrorPageRenderer implements ErrorRenderer
         }
 
         // Error pages must never end up in a search index or a shared cache.
-        if ($this->config->get('error-pages.noindex') === true) {
+        if ($this->config->get('janitor.noindex') === true) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
         }
 
@@ -403,7 +403,7 @@ class ErrorPageRenderer implements ErrorRenderer
 
     protected function stringConfig(string $key): ?string
     {
-        $value = $this->config->get('error-pages.'.$key);
+        $value = $this->config->get('janitor.'.$key);
 
         return is_string($value) && $value !== '' ? $value : null;
     }
@@ -413,7 +413,7 @@ class ErrorPageRenderer implements ErrorRenderer
      */
     protected function arrayConfig(string $key): array
     {
-        $value = $this->config->get('error-pages.'.$key);
+        $value = $this->config->get('janitor.'.$key);
 
         /** @var array<string, bool> $value */
         return is_array($value) ? $value : [];

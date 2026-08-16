@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
+use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
 
 /**
  * Resolves the correlation id for the current request.
@@ -18,7 +18,7 @@ use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
  */
 class RequestId implements RequestIdResolver
 {
-    public const ATTRIBUTE = 'error-pages.request_id';
+    public const ATTRIBUTE = 'janitor.request_id';
 
     /**
      * Header values end up in HTML and in log files; keep them boring.

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
+use FreshwaveOnline\Janitor\Contracts\ActionResolver;
+use FreshwaveOnline\Janitor\Data\ErrorAction;
+use FreshwaveOnline\Janitor\Data\ErrorContext;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
-use Vvdboogaard\ErrorPages\Data\ErrorAction;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
 
 /**
  * Builds the call-to-action buttons for a status code from config.
@@ -208,12 +208,12 @@ class ActionFactory implements ActionResolver
 
     protected function label(string $key): string
     {
-        return (string) $this->translator->get('error-pages::ui.actions.'.$key);
+        return (string) $this->translator->get('janitor::ui.actions.'.$key);
     }
 
     protected function setting(string $key, mixed $default = null): mixed
     {
-        return $this->config->get('error-pages.'.$key, $default);
+        return $this->config->get('janitor.'.$key, $default);
     }
 
     protected function string(string $key): ?string

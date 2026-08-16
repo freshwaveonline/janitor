@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Tests;
+namespace FreshwaveOnline\Janitor\Tests;
 
+use FreshwaveOnline\Janitor\Integrations\Filament;
+use FreshwaveOnline\Janitor\JanitorServiceProvider;
+use FreshwaveOnline\Janitor\Support\Icons;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Vvdboogaard\ErrorPages\ErrorPagesServiceProvider;
-use Vvdboogaard\ErrorPages\Integrations\Filament;
-use Vvdboogaard\ErrorPages\Support\Icons;
 
 abstract class TestCase extends Orchestra
 {
@@ -33,7 +33,7 @@ abstract class TestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [ErrorPagesServiceProvider::class];
+        return [JanitorServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
@@ -44,6 +44,6 @@ abstract class TestCase extends Orchestra
 
         // The package defers to Ignition while debugging; the suite exercises
         // the package's own pages, so take over unconditionally.
-        $app['config']->set('error-pages.details.replace_debug_page', true);
+        $app['config']->set('janitor.details.replace_debug_page', true);
     }
 }

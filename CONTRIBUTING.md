@@ -6,8 +6,8 @@ welcome.
 ## Getting set up
 
 ```bash
-git clone https://github.com/vvdboogaard/laravel-error-pages
-cd laravel-error-pages
+git clone https://github.com/freshwaveonline/janitor
+cd janitor
 composer install
 ```
 
@@ -23,15 +23,15 @@ before opening a pull request and the matrix will usually agree with you.
 
 ## Seeing your change
 
-Every error state renders at `/_error-pages` in a local app, so you rarely need
+Every error state renders at `/_janitor` in a local app, so you rarely need
 to provoke a real error:
 
 ```
-/_error-pages                     all states
-/_error-pages/500?details=1       with the technical block
-/_error-pages/429?retry=120       with a countdown
-/_error-pages/503?theme=dark      dark surface
-/_error-pages/500?modal=1         the Livewire pop-up
+/_janitor                     all states
+/_janitor/500?details=1       with the technical block
+/_janitor/429?retry=120       with a countdown
+/_janitor/503?theme=dark      dark surface
+/_janitor/500?modal=1         the Livewire pop-up
 ```
 
 ## What a good pull request looks like

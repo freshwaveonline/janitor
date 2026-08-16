@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Enums\DetailVisibility;
+use FreshwaveOnline\Janitor\ErrorPageRenderer;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
-use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
-use Vvdboogaard\ErrorPages\ErrorPageRenderer;
 
 beforeEach(function (): void {
     Route::middleware('web')->group(function (): void {
@@ -33,7 +33,7 @@ it('renders a styled page for a 404', function (): void {
 });
 
 it('renders a 500 without leaking the exception message by default', function (): void {
-    config()->set('error-pages.details.visibility', DetailVisibility::Never);
+    config()->set('janitor.details.visibility', DetailVisibility::Never);
 
     $response = $this->get('/boom');
 
@@ -43,19 +43,19 @@ it('renders a 500 without leaking the exception message by default', function ()
 });
 
 it('shows the exception and a copy button when the environment allows it', function (): void {
-    config()->set('error-pages.details.visibility', DetailVisibility::Always);
+    config()->set('janitor.details.visibility', DetailVisibility::Always);
 
     $response = $this->get('/boom');
 
     $response->assertStatus(500)
         ->assertSee('Database has gone away')
         ->assertSee('Technical details')
-        ->assertSee('data-ep-copy-from', false);
+        ->assertSee('data-jn-copy-from', false);
 });
 
 it('never shows the exception when visibility is never, whatever the environment', function (): void {
     config()->set('app.debug', true);
-    config()->set('error-pages.details.visibility', DetailVisibility::Never);
+    config()->set('janitor.details.visibility', DetailVisibility::Never);
 
     $this->get('/boom')->assertDontSee('Database has gone away');
 });
@@ -102,7 +102,7 @@ it('shows a retry moment and a countdown for a 429', function (): void {
 
     $response->assertStatus(429)
         ->assertSee('When to try again')
-        ->assertSee('data-ep-countdown', false)
+        ->assertSee('data-jn-countdown', false)
         ->assertHeader('Retry-After');
 });
 
@@ -112,8 +112,8 @@ it('marks the retry button as waiting without disabling it server-side', functio
     // beats a button that can never be pressed.
     $content = $this->get('/throttled')->getContent();
 
-    expect($content)->toContain('data-ep-wait-for-retry')
-        ->and($content)->not->toContain('disabled data-ep-wait-for-retry');
+    expect($content)->toContain('data-jn-wait-for-retry')
+        ->and($content)->not->toContain('disabled data-jn-wait-for-retry');
 });
 
 it('falls back to the family copy for a status without its own translation', function (): void {
@@ -162,7 +162,7 @@ it('marks error pages as noindex', function (): void {
 });
 
 it('hands the exception back to Laravel when the package is disabled', function (): void {
-    config()->set('error-pages.enabled', false);
+    config()->set('janitor.enabled', false);
 
     $this->get('/missing')
         ->assertStatus(404)
@@ -170,7 +170,7 @@ it('hands the exception back to Laravel when the package is disabled', function 
 });
 
 it('skips status codes that are excluded', function (): void {
-    config()->set('error-pages.except_codes', [404]);
+    config()->set('janitor.except_codes', [404]);
 
     $this->get('/missing')->assertDontSee('What you can do');
 });
@@ -204,7 +204,7 @@ it('defers to the application when it has its own errors view', function (): voi
 });
 
 it('takes over even with an application view when the option is off', function (): void {
-    config()->set('error-pages.views.prefer_application_views', false);
+    config()->set('janitor.views.prefer_application_views', false);
 
     expect($this->app->make(ErrorPageRenderer::class)
         ->shouldHandle(request(), new NotFoundHttpException))->toBeTrue();

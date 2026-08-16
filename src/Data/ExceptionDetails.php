@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Data;
+namespace FreshwaveOnline\Janitor\Data;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Throwable;

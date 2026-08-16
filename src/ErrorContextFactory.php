@@ -2,28 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages;
+namespace FreshwaveOnline\Janitor;
 
 use Carbon\CarbonImmutable;
+use FreshwaveOnline\Janitor\Contracts\ActionResolver;
+use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
+use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
+use FreshwaveOnline\Janitor\Contracts\MessageNumberGenerator;
+use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
+use FreshwaveOnline\Janitor\Contracts\RetryAfterResolver;
+use FreshwaveOnline\Janitor\Data\Branding;
+use FreshwaveOnline\Janitor\Data\ErrorContext;
+use FreshwaveOnline\Janitor\Data\ExceptionDetails;
+use FreshwaveOnline\Janitor\Enums\DetailVisibility;
+use FreshwaveOnline\Janitor\Enums\Theme;
+use FreshwaveOnline\Janitor\Support\Icons;
+use FreshwaveOnline\Janitor\Support\Palette;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
-use Vvdboogaard\ErrorPages\Contracts\ActionResolver;
-use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
-use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
-use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
-use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
-use Vvdboogaard\ErrorPages\Contracts\RetryAfterResolver;
-use Vvdboogaard\ErrorPages\Data\Branding;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
-use Vvdboogaard\ErrorPages\Data\ExceptionDetails;
-use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
-use Vvdboogaard\ErrorPages\Enums\Theme;
-use Vvdboogaard\ErrorPages\Support\Icons;
-use Vvdboogaard\ErrorPages\Support\Palette;
 
 /**
  * Resolves a Throwable into the fully-populated ErrorContext the presentations
@@ -174,9 +174,9 @@ class ErrorContextFactory implements ErrorContextBuilder
         $family = intdiv($statusCode, 100).'xx';
 
         return [
-            "error-pages::errors.{$statusCode}.{$key}",
-            "error-pages::errors.{$family}.{$key}",
-            "error-pages::errors.default.{$key}",
+            "janitor::errors.{$statusCode}.{$key}",
+            "janitor::errors.{$family}.{$key}",
+            "janitor::errors.default.{$key}",
         ];
     }
 
@@ -309,7 +309,7 @@ class ErrorContextFactory implements ErrorContextBuilder
 
     protected function setting(string $key, mixed $default = null): mixed
     {
-        return $this->config->get('error-pages.'.$key, $default);
+        return $this->config->get('janitor.'.$key, $default);
     }
 
     protected function stringSetting(string $key): ?string

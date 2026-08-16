@@ -25,7 +25,7 @@ Some notes on the parts most worth scrutinising, so a report can get to the poin
   bound method arguments. A route by which any of those reach the page is a
   vulnerability.
 - **Message numbers.** These are a hash of a project-relative `file:line`
-  fingerprint. Without `ERROR_PAGES_SALT` set, someone able to trigger errors
+  fingerprint. Without `JANITOR_SALT` set, someone able to trigger errors
   could in principle confirm a guessed file path by comparing hashes. Set the
   salt in production.
 - **Request IDs.** Header values are length-capped and character-validated

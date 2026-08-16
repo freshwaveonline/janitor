@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Http\Middleware;
+namespace FreshwaveOnline\Janitor\Http\Middleware;
 
 use Closure;
+use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Vvdboogaard\ErrorPages\Contracts\RequestIdResolver;
 
 /**
  * Assigns the correlation id at the very start of the request.

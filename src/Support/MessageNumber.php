@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
+use FreshwaveOnline\Janitor\Contracts\MessageNumberGenerator;
+use FreshwaveOnline\Janitor\Enums\MessageNumberAlphabet;
+use FreshwaveOnline\Janitor\Enums\OriginStrategy;
 use Throwable;
-use Vvdboogaard\ErrorPages\Contracts\MessageNumberGenerator;
-use Vvdboogaard\ErrorPages\Enums\MessageNumberAlphabet;
-use Vvdboogaard\ErrorPages\Enums\OriginStrategy;
 
 /**
  * Deterministic, human-quotable identifier for an error.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Enums;
+namespace FreshwaveOnline\Janitor\Enums;
 
 /**
  * Colour scheme used by the error pages.

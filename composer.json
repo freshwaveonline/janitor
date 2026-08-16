@@ -1,15 +1,16 @@
 {
-    "name": "vvdboogaard/laravel-error-pages",
-    "description": "Informative, white-label error pages for Laravel with message numbers, request IDs, retry countdowns, Livewire pop-ups and optional Filament branding.",
+    "name": "freshwaveonline/janitor",
+    "description": "Janitor cleans up after your application: informative, white-label error pages for Laravel with message numbers, request IDs, retry countdowns, Livewire pop-ups and optional Filament branding.",
     "keywords": [
         "laravel",
+        "janitor",
         "error-pages",
         "exceptions",
         "error-handling",
         "livewire",
         "filament"
     ],
-    "homepage": "https://github.com/vvdboogaard/laravel-error-pages",
+    "homepage": "https://github.com/freshwaveonline/janitor",
     "license": "MIT",
     "authors": [
         {
@@ -19,9 +20,9 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/vvdboogaard/laravel-error-pages/issues",
-        "source": "https://github.com/vvdboogaard/laravel-error-pages",
-        "docs": "https://github.com/vvdboogaard/laravel-error-pages#readme"
+        "issues": "https://github.com/freshwaveonline/janitor/issues",
+        "source": "https://github.com/freshwaveonline/janitor",
+        "docs": "https://github.com/freshwaveonline/janitor#readme"
     },
     "require": {
         "php": "^8.2",
@@ -45,12 +46,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Vvdboogaard\\ErrorPages\\": "src/"
+            "FreshwaveOnline\\Janitor\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Vvdboogaard\\ErrorPages\\Tests\\": "tests/"
+            "FreshwaveOnline\\Janitor\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -70,10 +71,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Vvdboogaard\\ErrorPages\\ErrorPagesServiceProvider"
+                "FreshwaveOnline\\Janitor\\JanitorServiceProvider"
             ],
             "aliases": {
-                "ErrorPages": "Vvdboogaard\\ErrorPages\\Facades\\ErrorPages"
+                "Janitor": "FreshwaveOnline\\Janitor\\Facades\\Janitor"
             }
         },
         "branch-alias": {

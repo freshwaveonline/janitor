@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Route;
 | Exporting the views
 |--------------------------------------------------------------------------
 |
-| `php artisan vendor:publish --tag=error-pages-views` copies every blade file
-| into resources/views/vendor/error-pages. Laravel's namespaced view finder
+| `php artisan vendor:publish --tag=janitor-views` copies every blade file
+| into resources/views/vendor/janitor. Laravel's namespaced view finder
 | checks that directory first, so a published file wins with no extra config.
 |
 | Three levels of override, each tested below:
@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Route;
 
 function publishViews(): string
 {
-    test()->artisan('vendor:publish', ['--tag' => 'error-pages-views', '--force' => true])->assertSuccessful();
+    test()->artisan('vendor:publish', ['--tag' => 'janitor-views', '--force' => true])->assertSuccessful();
     app('view')->flushFinderCache();
 
-    return resource_path('views/vendor/error-pages');
+    return resource_path('views/vendor/janitor');
 }
 
 beforeEach(function (): void {
@@ -37,7 +37,7 @@ beforeEach(function (): void {
 });
 
 afterEach(function (): void {
-    File::deleteDirectory(resource_path('views/vendor/error-pages'));
+    File::deleteDirectory(resource_path('views/vendor/janitor'));
 });
 
 it('publishes every blade file the package ships', function (): void {
@@ -91,7 +91,7 @@ it('lets a published page replace the whole layout', function (): void {
     $this->get('/missing')
         ->assertStatus(404)
         ->assertSee('404 at Acme')
-        ->assertDontSee('ep-card', false);
+        ->assertDontSee('jn-card', false);
 });
 
 it('lets a published partial be changed without touching the rest', function (): void {
@@ -108,7 +108,7 @@ it('lets a published partial be changed without touching the rest', function ():
         // … and everything around it still comes from the package.
         ->assertSee('We could not find this page')
         ->assertSee('What you can do')
-        ->assertSee('ep-card', false);
+        ->assertSee('jn-card', false);
 });
 
 it('lets one status code get its own page', function (): void {
@@ -129,10 +129,10 @@ it('keeps the published styles editable as plain CSS', function (): void {
     $directory = publishViews();
 
     $styles = File::get($directory.'/partials/styles.blade.php');
-    File::put($directory.'/partials/styles.blade.php', $styles."\n<style>.ep-card { border-radius: 0; }</style>");
+    File::put($directory.'/partials/styles.blade.php', $styles."\n<style>.jn-card { border-radius: 0; }</style>");
     app('view')->flushFinderCache();
 
-    $this->get('/missing')->assertSee('.ep-card { border-radius: 0; }', false);
+    $this->get('/missing')->assertSee('.jn-card { border-radius: 0; }', false);
 });
 
 it('gives published views the same $error context the package uses', function (): void {

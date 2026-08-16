@@ -1,9 +1,11 @@
-# Laravel Error Pages
+# Janitor
 
-[![tests](https://github.com/vvdboogaard/laravel-error-pages/actions/workflows/tests.yml/badge.svg)](https://github.com/vvdboogaard/laravel-error-pages/actions/workflows/tests.yml)
-[![static analysis](https://github.com/vvdboogaard/laravel-error-pages/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/vvdboogaard/laravel-error-pages/actions/workflows/static-analysis.yml)
-[![latest version](https://img.shields.io/packagist/v/vvdboogaard/laravel-error-pages.svg)](https://packagist.org/packages/vvdboogaard/laravel-error-pages)
-[![license](https://img.shields.io/packagist/l/vvdboogaard/laravel-error-pages.svg)](LICENSE.md)
+**Informative, white-label error pages for Laravel.**
+
+[![tests](https://github.com/freshwaveonline/janitor/actions/workflows/tests.yml/badge.svg)](https://github.com/freshwaveonline/janitor/actions/workflows/tests.yml)
+[![static analysis](https://github.com/freshwaveonline/janitor/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/freshwaveonline/janitor/actions/workflows/static-analysis.yml)
+[![latest version](https://img.shields.io/packagist/v/freshwaveonline/janitor.svg)](https://packagist.org/packages/freshwaveonline/janitor)
+[![license](https://img.shields.io/packagist/l/freshwaveonline/janitor.svg)](LICENSE.md)
 
 Laravel's default error pages show a status code and one line of text. That is
 enough for a developer and almost useless for the person who hit the error.
@@ -55,7 +57,7 @@ exact error in your logs.
 **Requirements:** PHP 8.2+, Laravel 11 or 12.
 
 ```bash
-composer require vvdboogaard/laravel-error-pages
+composer require freshwaveonline/janitor
 ```
 
 The package registers itself through Laravel's auto-discovery and starts
@@ -72,14 +74,14 @@ Composer at it directly. In the **consuming application's** `composer.json`:
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/vvdboogaard/laravel-error-pages"
+            "url": "https://github.com/freshwaveonline/janitor"
         }
     ]
 }
 ```
 
 ```bash
-composer require vvdboogaard/laravel-error-pages:^1.0
+composer require freshwaveonline/janitor:^1.0
 ```
 
 Composer needs credentials for the private repository. Either a GitHub token
@@ -89,7 +91,7 @@ with `repo` scope:
 composer config --global github-oauth.github.com ghp_yourtokenhere
 ```
 
-or SSH, by using `git@github.com:vvdboogaard/laravel-error-pages.git` as the
+or SSH, by using `git@github.com:freshwaveonline/janitor.git` as the
 `url` and relying on your existing SSH key. On a deploy server, use a machine
 user or a deploy key rather than a personal token.
 
@@ -97,7 +99,7 @@ Before a tag exists, require the branch instead — `dev-main` is aliased to
 `1.0.x-dev`, so `^1.0` already resolves against it:
 
 ```bash
-composer require vvdboogaard/laravel-error-pages:dev-main
+composer require freshwaveonline/janitor:dev-main
 ```
 
 </details>
@@ -112,7 +114,7 @@ Composer symlinks the directory, so edits are picked up without reinstalling:
     "repositories": [
         {
             "type": "path",
-            "url": "../laravel-error-pages",
+            "url": "../janitor",
             "options": { "symlink": true }
         }
     ]
@@ -120,7 +122,7 @@ Composer symlinks the directory, so edits are picked up without reinstalling:
 ```
 
 ```bash
-composer require vvdboogaard/laravel-error-pages:@dev
+composer require freshwaveonline/janitor:@dev
 ```
 
 ### Releasing a version
@@ -141,15 +143,15 @@ App picks the tag up from there.
 To tune the package, publish the config:
 
 ```bash
-php artisan error-pages:install
+php artisan janitor:install
 ```
 
 or publish assets individually:
 
 ```bash
-php artisan vendor:publish --tag=error-pages-config
-php artisan vendor:publish --tag=error-pages-views
-php artisan vendor:publish --tag=error-pages-lang
+php artisan vendor:publish --tag=janitor-config
+php artisan vendor:publish --tag=janitor-views
+php artisan vendor:publish --tag=janitor-lang
 ```
 
 ## Quick start
@@ -157,17 +159,17 @@ php artisan vendor:publish --tag=error-pages-lang
 Four environment variables cover most projects:
 
 ```dotenv
-ERROR_PAGES_PRIMARY="#4f46e5"
-ERROR_PAGES_SUPPORT_EMAIL="support@acme.test"
-ERROR_PAGES_HOME_URL="https://acme.test"
-ERROR_PAGES_PREFIX="ACME"
+JANITOR_PRIMARY="#4f46e5"
+JANITOR_SUPPORT_EMAIL="support@acme.test"
+JANITOR_HOME_URL="https://acme.test"
+JANITOR_PREFIX="ACME"
 ```
 
 Then look at every page without breaking anything:
 
 ```
 php artisan serve
-open http://localhost:8000/_error-pages
+open http://localhost:8000/_janitor
 ```
 
 The preview lists all eighteen states and accepts `?theme=dark`, `?details=1`,
@@ -192,11 +194,11 @@ fingerprint — never from the message, the timestamp or the user. That means:
 
 ```php
 'message_number' => [
-    'prefix' => env('ERROR_PAGES_PREFIX', 'ERR'),  // ERR-3F9A2C
+    'prefix' => env('JANITOR_PREFIX', 'ERR'),  // ERR-3F9A2C
     'length' => 6,
     'alphabet' => MessageNumberAlphabet::Hex,      // Hex | Numeric | Base36
     'origin' => OriginStrategy::Application,       // Application | Thrown | RootCause
-    'salt' => env('ERROR_PAGES_SALT'),
+    'salt' => env('JANITOR_SALT'),
 ],
 ```
 
@@ -204,7 +206,7 @@ fingerprint — never from the message, the timestamp or the user. That means:
 `QueryException` thrown deep inside Illuminate still fingerprints to the line in
 *your* code that caused it.
 
-> Set `ERROR_PAGES_SALT` in production. Without it, someone who can trigger errors
+> Set `JANITOR_SALT` in production. Without it, someone who can trigger errors
 > could confirm a guessed file path by comparing hashes. Keep the salt stable —
 > changing it changes every number you have ever quoted.
 
@@ -299,7 +301,7 @@ whatever the user had typed — completely intact. `ModalPosition` has nine valu
 behave as toasts.
 
 The handler is injected automatically when Livewire is installed. To place it
-yourself, set `inject_assets` to `false` and add `@errorPagesScripts` to your
+yourself, set `inject_assets` to `false` and add `@janitorScripts` to your
 layout.
 
 ### Filament
@@ -333,9 +335,9 @@ top of it, for both schemes:
 
 ```php
 'colors' => [
-    'primary' => env('ERROR_PAGES_PRIMARY', '#4f46e5'),
-    'light' => env('ERROR_PAGES_PRIMARY_LIGHT'),   // optional override
-    'dark' => env('ERROR_PAGES_PRIMARY_DARK'),     // optional override
+    'primary' => env('JANITOR_PRIMARY', '#4f46e5'),
+    'light' => env('JANITOR_PRIMARY_LIGHT'),   // optional override
+    'dark' => env('JANITOR_PRIMARY_DARK'),     // optional override
     'auto_contrast' => true,
 ],
 
@@ -358,14 +360,14 @@ English and Dutch ship with the package. Copy resolution falls back from the
 status code to the family to the default, so you only translate what differs:
 
 ```
-error-pages::errors.404.title  →  error-pages::errors.4xx.title  →  error-pages::errors.default.title
+janitor::errors.404.title  →  janitor::errors.4xx.title  →  janitor::errors.default.title
 ```
 
 Each status has `title`, `message`, `reason`, `explanation` and `suggestions`,
 with `:status`, `:brand`, `:message_number` and `:support_email` placeholders.
 
 ```bash
-php artisan vendor:publish --tag=error-pages-lang
+php artisan vendor:publish --tag=janitor-lang
 ```
 
 ### API responses
@@ -385,16 +387,16 @@ Requests that expect JSON get the same information in a machine-readable shape:
 ## Customising the views
 
 ```bash
-php artisan vendor:publish --tag=error-pages-views
+php artisan vendor:publish --tag=janitor-views
 ```
 
-Every blade file lands in `resources/views/vendor/error-pages/`. Laravel's
+Every blade file lands in `resources/views/vendor/janitor/`. Laravel's
 namespaced view finder checks that directory first, so a published file wins
 immediately — no config, no registration. Delete a file to fall back to the
 packaged version.
 
 ```
-resources/views/vendor/error-pages/
+resources/views/vendor/janitor/
 ├── error.blade.php               ← the standalone page
 ├── embedded.blade.php            ← the card inside your own layout
 ├── preview.blade.php
@@ -418,7 +420,7 @@ job:
 **One partial.** Change the meta chips and keep everything else:
 
 ```blade
-{{-- resources/views/vendor/error-pages/partials/meta.blade.php --}}
+{{-- resources/views/vendor/janitor/partials/meta.blade.php --}}
 <div class="my-meta">{{ $error->messageNumber }}</div>
 ```
 
@@ -442,12 +444,12 @@ job:
 directory and only that status gets the bespoke page:
 
 ```blade
-{{-- resources/views/vendor/error-pages/errors/404.blade.php --}}
+{{-- resources/views/vendor/janitor/errors/404.blade.php --}}
 <h1>Bespoke 404 — {{ $error->title }}</h1>
 ```
 
 Every view receives the same `$error` object
-(`Vvdboogaard\ErrorPages\Data\ErrorContext`):
+(`FreshwaveOnline\Janitor\Data\ErrorContext`):
 
 | Property | What it holds |
 |---|---|
@@ -490,8 +492,8 @@ Every moving part is bound by contract, so you replace one piece from your own
 The multi-tenant case, which is the one that comes up most:
 
 ```php
-use Vvdboogaard\ErrorPages\Contracts\BrandingResolver;
-use Vvdboogaard\ErrorPages\Data\Branding;
+use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
+use FreshwaveOnline\Janitor\Data\Branding;
 
 class TenantBranding implements BrandingResolver
 {
@@ -624,7 +626,7 @@ opening a public issue.
 
 ## Credits
 
-- [Vincent van den Boogaard](https://github.com/vvdboogaard)
+- [Vincent van den Boogaard](https://github.com/freshwaveonline)
 - Icons from [Heroicons](https://heroicons.com) (MIT), inlined.
 
 ## License

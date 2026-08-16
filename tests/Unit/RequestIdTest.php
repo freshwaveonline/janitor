@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Support\RequestId;
 use Illuminate\Http\Request;
-use Vvdboogaard\ErrorPages\Support\RequestId;
 
 function requestId(array $overrides = []): RequestId
 {

@@ -1,5 +1,5 @@
 @php
-    /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
+    /** @var \FreshwaveOnline\Janitor\Data\ErrorContext $error */
     $branding = $error->branding;
 @endphp
 
@@ -8,7 +8,7 @@
          alt="{{ $branding->name ?? '' }}"
          height="{{ $branding->logoHeight }}"
          style="height: {{ $branding->logoHeight }}px"
-         @class(['ep-brand--light' => (bool) $branding->logoDark])>
+         @class(['jn-brand--light' => (bool) $branding->logoDark])>
 
     @if ($branding->logoDark)
         {{-- Swapped by the theme rules in the inline stylesheet. --}}
@@ -16,7 +16,7 @@
              alt="{{ $branding->name ?? '' }}"
              height="{{ $branding->logoHeight }}"
              style="height: {{ $branding->logoHeight }}px"
-             class="ep-brand--dark">
+             class="jn-brand--dark">
     @endif
 @endif
 

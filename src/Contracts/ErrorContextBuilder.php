@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Contracts;
+namespace FreshwaveOnline\Janitor\Contracts;
 
+use FreshwaveOnline\Janitor\Data\ErrorContext;
 use Illuminate\Http\Request;
 use Throwable;
-use Vvdboogaard\ErrorPages\Data\ErrorContext;
 
 /**
  * Resolves a Throwable into the single value object every presentation — the

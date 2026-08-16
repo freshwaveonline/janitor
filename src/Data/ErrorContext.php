@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Data;
+namespace FreshwaveOnline\Janitor\Data;
 
 use Carbon\CarbonInterface;
+use FreshwaveOnline\Janitor\Enums\Theme;
+use FreshwaveOnline\Janitor\Support\Palette;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use Throwable;
-use Vvdboogaard\ErrorPages\Enums\Theme;
-use Vvdboogaard\ErrorPages\Support\Palette;
 
 /**
  * Everything the error page needs, resolved once and passed around as one value.

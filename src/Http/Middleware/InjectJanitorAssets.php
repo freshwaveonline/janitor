@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Http\Middleware;
+namespace FreshwaveOnline\Janitor\Http\Middleware;
 
 use Closure;
+use FreshwaveOnline\Janitor\Enums\LivewireErrorMode;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Http\Request;
 use Livewire\Livewire;
 use Symfony\Component\HttpFoundation\Response;
-use Vvdboogaard\ErrorPages\Enums\LivewireErrorMode;
 
 /**
  * Appends the (inline, ~3 KB) Livewire error handler just before `</body>`.
  *
  * Same trick Livewire itself uses. Opt out with `livewire.inject_assets` and
- * place `@errorPagesScripts` in your layout instead.
+ * place `@janitorScripts` in your layout instead.
  */
-class InjectErrorPagesAssets
+class InjectJanitorAssets
 {
     public function __construct(
         private readonly Config $config,
@@ -40,7 +40,7 @@ class InjectErrorPagesAssets
             return $response;
         }
 
-        $script = $this->views->make('error-pages::partials.livewire-script')->render();
+        $script = $this->views->make('janitor::partials.livewire-script')->render();
 
         // Replace the final closing tag only: a nested `</body>` inside a code
         // sample on the page must not swallow the script.
@@ -55,19 +55,19 @@ class InjectErrorPagesAssets
 
     protected function shouldInject(Request $request, Response $response): bool
     {
-        if ($this->config->get('error-pages.enabled') !== true) {
+        if ($this->config->get('janitor.enabled') !== true) {
             return false;
         }
 
-        if ($this->config->get('error-pages.livewire.inject_assets') !== true) {
+        if ($this->config->get('janitor.livewire.inject_assets') !== true) {
             return false;
         }
 
-        if (LivewireErrorMode::parse($this->config->get('error-pages.livewire.mode')) === LivewireErrorMode::Disabled) {
+        if (LivewireErrorMode::parse($this->config->get('janitor.livewire.mode')) === LivewireErrorMode::Disabled) {
             return false;
         }
 
-        if ($request->attributes->get('error-pages.assets_injected') === true) {
+        if ($request->attributes->get('janitor.assets_injected') === true) {
             return false;
         }
 

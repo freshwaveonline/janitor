@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Facades;
+namespace FreshwaveOnline\Janitor\Facades;
 
+use FreshwaveOnline\Janitor\ErrorPageRenderer;
 use Illuminate\Support\Facades\Facade;
-use Vvdboogaard\ErrorPages\ErrorPageRenderer;
 
 /**
  * @method static \Symfony\Component\HttpFoundation\Response|null render(\Illuminate\Http\Request $request, \Throwable $exception)
- * @method static \Symfony\Component\HttpFoundation\Response renderContext(\Illuminate\Http\Request $request, \Vvdboogaard\ErrorPages\Data\ErrorContext $context)
+ * @method static \Symfony\Component\HttpFoundation\Response renderContext(\Illuminate\Http\Request $request, \FreshwaveOnline\Janitor\Data\ErrorContext $context)
  * @method static bool shouldHandle(\Illuminate\Http\Request $request, \Throwable $exception)
  * @method static int statusFor(\Throwable $exception)
  * @method static string viewName(int $status)
- * @method static array<string, mixed> livewirePayload(\Vvdboogaard\ErrorPages\Data\ErrorContext $context)
+ * @method static array<string, mixed> livewirePayload(\FreshwaveOnline\Janitor\Data\ErrorContext $context)
  *
  * @see ErrorPageRenderer
  */
-class ErrorPages extends Facade
+class Janitor extends Facade
 {
     protected static function getFacadeAccessor(): string
     {

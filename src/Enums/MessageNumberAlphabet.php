@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Enums;
+namespace FreshwaveOnline\Janitor\Enums;
 
 /**
  * Character set used to render the hashed message number.

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Enums\Theme;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Vvdboogaard\ErrorPages\Enums\Theme;
 
 beforeEach(function (): void {
     Route::middleware('web')->group(function (): void {
@@ -32,27 +32,27 @@ it('renders the page in the application locale', function (): void {
 
 it('can be pinned to one locale regardless of the app locale', function (): void {
     app()->setLocale('nl');
-    config()->set('error-pages.locale', 'en');
+    config()->set('janitor.locale', 'en');
 
     $this->get('/missing')->assertSee('We could not find this page');
 });
 
 it('substitutes the support address into the copy', function (): void {
-    config()->set('error-pages.links.support_email', 'help@acme.test');
+    config()->set('janitor.links.support_email', 'help@acme.test');
 
     $this->get('/forbidden')->assertSee('help@acme.test');
 });
 
 it('only shows the support address for the configured codes', function (): void {
-    config()->set('error-pages.links.support_email', 'help@acme.test');
-    config()->set('error-pages.links.support_email_codes', [500]);
+    config()->set('janitor.links.support_email', 'help@acme.test');
+    config()->set('janitor.links.support_email_codes', [500]);
 
     $this->get('/missing')->assertDontSee('help@acme.test');
     $this->get('/boom')->assertSee('help@acme.test');
 });
 
 it('pre-fills the support mail with the message number', function (): void {
-    config()->set('error-pages.links.support_email', 'help@acme.test');
+    config()->set('janitor.links.support_email', 'help@acme.test');
 
     $response = $this->get('/boom');
     $number = $response->headers->get('X-Message-Number');
@@ -68,16 +68,16 @@ it('pre-fills the support mail with the message number', function (): void {
 */
 
 it('emits both colour schemes in auto mode', function (): void {
-    config()->set('error-pages.theme', Theme::Auto);
+    config()->set('janitor.theme', Theme::Auto);
 
     $this->get('/missing')
         ->assertSee('prefers-color-scheme: dark', false)
-        ->assertSee('[data-ep-theme="dark"]', false)
+        ->assertSee('[data-jn-theme="dark"]', false)
         ->assertSee('color-scheme: light dark', false);
 });
 
 it('emits only the dark palette when the theme is forced to dark', function (): void {
-    config()->set('error-pages.theme', Theme::Dark);
+    config()->set('janitor.theme', Theme::Dark);
 
     $this->get('/missing')
         ->assertDontSee('prefers-color-scheme: dark', false)
@@ -85,13 +85,13 @@ it('emits only the dark palette when the theme is forced to dark', function (): 
 });
 
 it('carries the configured primary colour into the page', function (): void {
-    config()->set('error-pages.colors.primary', '#b91c1c');
+    config()->set('janitor.colors.primary', '#b91c1c');
 
-    $this->get('/missing')->assertSee('--ep-primary: #b91c1c', false);
+    $this->get('/missing')->assertSee('--jn-primary: #b91c1c', false);
 });
 
 it('lets the light and dark overrides win over the primary colour', function (): void {
-    config()->set('error-pages.colors', [
+    config()->set('janitor.colors', [
         'primary' => '#4f46e5',
         'light' => '#b91c1c',
         'dark' => '#f87171',
@@ -99,8 +99,8 @@ it('lets the light and dark overrides win over the primary colour', function ():
     ]);
 
     $this->get('/missing')
-        ->assertSee('--ep-primary: #b91c1c', false)
-        ->assertSee('--ep-primary: #f87171', false);
+        ->assertSee('--jn-primary: #b91c1c', false)
+        ->assertSee('--jn-primary: #f87171', false);
 });
 
 /*
@@ -114,19 +114,19 @@ it('falls back to the app name when no brand is configured', function (): void {
 });
 
 it('renders a configured logo', function (): void {
-    config()->set('error-pages.brand.logo', 'https://cdn.acme.test/logo.svg');
+    config()->set('janitor.brand.logo', 'https://cdn.acme.test/logo.svg');
 
     $this->get('/missing')->assertSee('https://cdn.acme.test/logo.svg', false);
 });
 
 it('renders a separate dark-mode logo when one is configured', function (): void {
-    config()->set('error-pages.brand.logo', '/logo-light.svg');
-    config()->set('error-pages.brand.logo_dark', '/logo-dark.svg');
+    config()->set('janitor.brand.logo', '/logo-light.svg');
+    config()->set('janitor.brand.logo_dark', '/logo-dark.svg');
 
     $this->get('/missing')
         ->assertSee('/logo-light.svg', false)
         ->assertSee('/logo-dark.svg', false)
-        ->assertSee('ep-brand--dark', false);
+        ->assertSee('jn-brand--dark', false);
 });
 
 /*
@@ -136,19 +136,19 @@ it('renders a separate dark-mode logo when one is configured', function (): void
 */
 
 it('renders the actions configured for a status code', function (): void {
-    config()->set('error-pages.actions.404', ['home']);
+    config()->set('janitor.actions.404', ['home']);
 
     $this->get('/missing')
         ->assertSee('Go to home page')
         // The "go back" button is gone; the phrase still appears in the
         // suggestion list, so assert on the button's own marker.
-        ->assertDontSee('data-ep-action="back"', false);
+        ->assertDontSee('data-jn-action="back"', false);
 });
 
 it('drops actions that cannot resolve', function (): void {
     // No support address configured, so no support button.
-    config()->set('error-pages.actions.404', ['support', 'home']);
-    config()->set('error-pages.links.support_email', null);
+    config()->set('janitor.actions.404', ['support', 'home']);
+    config()->set('janitor.links.support_email', null);
 
     $this->get('/missing')
         ->assertDontSee('Contact support')
@@ -156,7 +156,7 @@ it('drops actions that cannot resolve', function (): void {
 });
 
 it('supports inline custom actions', function (): void {
-    config()->set('error-pages.actions.404', [[
+    config()->set('janitor.actions.404', [[
         'label' => 'Browse the catalogue',
         'url' => '/products',
         'icon' => 'magnifying-glass',
@@ -169,18 +169,18 @@ it('supports inline custom actions', function (): void {
 });
 
 it('always gives exactly one button the primary emphasis', function (): void {
-    config()->set('error-pages.actions.404', ['back', 'home']);
+    config()->set('janitor.actions.404', ['back', 'home']);
 
     $content = $this->get('/missing')->getContent();
 
     // Count the rendered class attribute, not the stylesheet's rules.
-    expect(substr_count($content, 'class="ep-btn ep-btn--primary"'))->toBe(1)
-        ->and(substr_count($content, 'class="ep-btn ep-btn--secondary"'))->toBe(1);
+    expect(substr_count($content, 'class="jn-btn jn-btn--primary"'))->toBe(1)
+        ->and(substr_count($content, 'class="jn-btn jn-btn--secondary"'))->toBe(1);
 });
 
 it('opens external actions in a new tab', function (): void {
-    config()->set('error-pages.links.status_page', 'https://status.acme.test');
-    config()->set('error-pages.actions.404', ['status_page']);
+    config()->set('janitor.links.status_page', 'https://status.acme.test');
+    config()->set('janitor.actions.404', ['status_page']);
 
     $this->get('/missing')->assertSee('rel="noopener noreferrer"', false);
 });

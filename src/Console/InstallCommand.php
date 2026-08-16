@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Console;
+namespace FreshwaveOnline\Janitor\Console;
 
 use Illuminate\Console\Command;
 
@@ -10,11 +10,11 @@ use function Laravel\Prompts\multiselect;
 
 class InstallCommand extends Command
 {
-    protected $signature = 'error-pages:install
+    protected $signature = 'janitor:install
                             {--all : Publish the config, the views and the translations}
                             {--force : Overwrite files that already exist}';
 
-    protected $description = 'Publish the laravel-error-pages config, views and translations';
+    protected $description = 'Publish the janitor config, views and translations';
 
     public function handle(): int
     {
@@ -30,17 +30,17 @@ class InstallCommand extends Command
 
         foreach ($assets as $asset) {
             $this->callSilently('vendor:publish', array_filter([
-                '--tag' => 'error-pages-'.$asset,
+                '--tag' => 'janitor-'.$asset,
                 '--force' => $this->option('force') ? true : null,
             ]));
 
-            $this->components->info(sprintf('Published error-pages %s.', $asset));
+            $this->components->info(sprintf('Published janitor %s.', $asset));
         }
 
         $this->newLine();
         $this->components->bulletList([
-            'Set ERROR_PAGES_PRIMARY, ERROR_PAGES_SUPPORT_EMAIL and ERROR_PAGES_HOME_URL in your .env.',
-            'Preview every page at /_error-pages while in local.',
+            'Set JANITOR_PRIMARY, JANITOR_SUPPORT_EMAIL and JANITOR_HOME_URL in your .env.',
+            'Preview every page at /_janitor while in local.',
         ]);
 
         return self::SUCCESS;
@@ -62,9 +62,9 @@ class InstallCommand extends Command
         $selected = multiselect(
             label: 'What would you like to publish?',
             options: [
-                'config' => 'Config file (config/error-pages.php)',
-                'views' => 'Blade views (resources/views/vendor/error-pages)',
-                'lang' => 'Translations (lang/vendor/error-pages)',
+                'config' => 'Config file (config/janitor.php)',
+                'views' => 'Blade views (resources/views/vendor/janitor)',
+                'lang' => 'Translations (lang/vendor/janitor)',
             ],
             default: ['config'],
         );

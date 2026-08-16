@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Http\Controllers;
+namespace FreshwaveOnline\Janitor\Http\Controllers;
 
+use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
+use FreshwaveOnline\Janitor\Contracts\ErrorRenderer;
+use FreshwaveOnline\Janitor\Enums\DetailVisibility;
+use FreshwaveOnline\Janitor\Enums\ModalPosition;
+use FreshwaveOnline\Janitor\Enums\Theme;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Contracts\View\View;
@@ -15,16 +20,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Throwable;
-use Vvdboogaard\ErrorPages\Contracts\ErrorContextBuilder;
-use Vvdboogaard\ErrorPages\Contracts\ErrorRenderer;
-use Vvdboogaard\ErrorPages\Enums\DetailVisibility;
-use Vvdboogaard\ErrorPages\Enums\ModalPosition;
-use Vvdboogaard\ErrorPages\Enums\Theme;
 
 /**
  * Design against every error state without provoking real errors.
  *
- * `/_error-pages` lists them, `/_error-pages/{code}` renders one. Handy query
+ * `/_janitor` lists them, `/_janitor/{code}` renders one. Handy query
  * parameters: `?theme=dark`, `?retry=90`, `?details=1`, `?modal=1`.
  */
 class PreviewController
@@ -51,9 +51,9 @@ class PreviewController
             $contexts[$code] = $this->factory->make($request, $this->exceptionFor($code, $request), $code);
         }
 
-        return $this->views->make('error-pages::preview', [
+        return $this->views->make('janitor::preview', [
             'contexts' => $contexts,
-            'basePath' => trim((string) $this->config->get('error-pages.preview.path', '_error-pages'), '/'),
+            'basePath' => trim((string) $this->config->get('janitor.preview.path', '_janitor'), '/'),
         ]);
     }
 
@@ -67,7 +67,7 @@ class PreviewController
 
         if ($request->boolean('modal')) {
             return new Response(
-                $this->views->make('error-pages::preview-modal', [
+                $this->views->make('janitor::preview-modal', [
                     'error' => $context,
                     'payload' => $this->renderer->livewirePayload($context),
                 ])->render()
@@ -89,12 +89,12 @@ class PreviewController
         $theme = $request->query('theme');
 
         if (is_string($theme) && Theme::tryFrom($theme) !== null) {
-            $this->config->set('error-pages.theme', Theme::from($theme));
+            $this->config->set('janitor.theme', Theme::from($theme));
         }
 
         if ($request->has('details')) {
             $this->config->set(
-                'error-pages.details.visibility',
+                'janitor.details.visibility',
                 $request->boolean('details')
                     ? DetailVisibility::Always
                     : DetailVisibility::Never,
@@ -104,7 +104,7 @@ class PreviewController
         $position = $request->query('position');
 
         if (is_string($position) && ModalPosition::tryFrom($position) !== null) {
-            $this->config->set('error-pages.livewire.position', ModalPosition::from($position));
+            $this->config->set('janitor.livewire.position', ModalPosition::from($position));
         }
     }
 

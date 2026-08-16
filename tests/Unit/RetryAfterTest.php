@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
+use FreshwaveOnline\Janitor\Support\RetryAfter;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
-use Vvdboogaard\ErrorPages\Support\RetryAfter;
 
 function retryAfter(array $overrides = []): RetryAfter
 {

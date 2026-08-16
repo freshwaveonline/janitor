@@ -1,31 +1,31 @@
 @php
-    /** @var \Vvdboogaard\ErrorPages\Data\ErrorContext $error */
-    use Vvdboogaard\ErrorPages\Support\Icons;
+    /** @var \FreshwaveOnline\Janitor\Data\ErrorContext $error */
+    use FreshwaveOnline\Janitor\Support\Icons;
 @endphp
 
-<main class="ep-card" role="main">
-    <header class="ep-header">
-        <div class="ep-emblem" aria-hidden="true">
+<main class="jn-card" role="main">
+    <header class="jn-header">
+        <div class="jn-emblem" aria-hidden="true">
             {!! Icons::svg($error->icon) !!}
         </div>
 
-        <div class="ep-heading">
-            <p class="ep-status">
-                <span class="ep-sr-only">{{ __('error-pages::ui.meta.status') }}</span>
+        <div class="jn-heading">
+            <p class="jn-status">
+                <span class="jn-sr-only">{{ __('janitor::ui.meta.status') }}</span>
                 <b>{{ $error->statusCode }}</b>
             </p>
 
-            <h1 class="ep-title">{{ $error->title }}</h1>
-            <p class="ep-lead">{{ $error->message }}</p>
+            <h1 class="jn-title">{{ $error->title }}</h1>
+            <p class="jn-lead">{{ $error->message }}</p>
         </div>
     </header>
 
     @if ($error->reason || $error->explanation)
-        <section class="ep-block" aria-labelledby="ep-reason-label">
-            <span class="ep-block__icon">{!! Icons::svg('information-circle') !!}</span>
+        <section class="jn-block" aria-labelledby="jn-reason-label">
+            <span class="jn-block__icon">{!! Icons::svg('information-circle') !!}</span>
 
-            <div class="ep-block__body">
-                <span class="ep-block__label" id="ep-reason-label">{{ __('error-pages::ui.headings.reason') }}</span>
+            <div class="jn-block__body">
+                <span class="jn-block__label" id="jn-reason-label">{{ __('janitor::ui.headings.reason') }}</span>
                 @if ($error->reason)
                     <p>{{ $error->reason }}</p>
                 @endif
@@ -36,13 +36,13 @@
         </section>
     @endif
 
-    @include('error-pages::partials.retry')
+    @include('janitor::partials.retry')
 
     @if ($error->suggestions !== [])
-        <section class="ep-section" aria-labelledby="ep-suggestions-label">
-            <h2 class="ep-section__title" id="ep-suggestions-label">{{ __('error-pages::ui.headings.suggestions') }}</h2>
+        <section class="jn-section" aria-labelledby="jn-suggestions-label">
+            <h2 class="jn-section__title" id="jn-suggestions-label">{{ __('janitor::ui.headings.suggestions') }}</h2>
 
-            <ul class="ep-list">
+            <ul class="jn-list">
                 @foreach ($error->suggestions as $suggestion)
                     <li>{!! Icons::svg('check-circle') !!}<span>{{ $suggestion }}</span></li>
                 @endforeach
@@ -50,19 +50,19 @@
         </section>
     @endif
 
-    @include('error-pages::partials.actions')
+    @include('janitor::partials.actions')
 
-    @include('error-pages::partials.meta')
+    @include('janitor::partials.meta')
 
-    @include('error-pages::partials.details')
+    @include('janitor::partials.details')
 </main>
 
 @if ($error->branding->supportEmail)
-    <p class="ep-support">
-        <span>{{ __('error-pages::ui.headings.support') }}</span>
-        <a href="{{ $error->supportMailto(config('error-pages.links.support_subject')) }}">{{ $error->branding->supportEmail }}</a>
+    <p class="jn-support">
+        <span>{{ __('janitor::ui.headings.support') }}</span>
+        <a href="{{ $error->supportMailto(config('janitor.links.support_subject')) }}">{{ $error->branding->supportEmail }}</a>
         @if ($error->messageNumber)
-            <span>{{ __('error-pages::ui.support.with_number', ['number' => $error->messageNumber]) }}</span>
+            <span>{{ __('janitor::ui.support.with_number', ['number' => $error->messageNumber]) }}</span>
         @endif
     </p>
 @endif

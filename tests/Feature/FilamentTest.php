@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use FreshwaveOnline\Janitor\Integrations\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Vvdboogaard\ErrorPages\Integrations\Filament;
 
 /**
  * Filament is a suggestion, never a requirement. These tests run without it
@@ -33,7 +33,7 @@ it('returns nothing rather than throwing when Filament is absent', function (): 
 });
 
 it('renders a normal page in an app without Filament', function (): void {
-    config()->set('error-pages.filament.enabled', true);
+    config()->set('janitor.filament.enabled', true);
 
     $this->get('/missing')
         ->assertStatus(404)
@@ -46,8 +46,8 @@ it('does not consult Filament at all when the integration is disabled', function
     // into it, so the page must still render from this package's own config.
     Filament::fake(true);
 
-    config()->set('error-pages.filament.enabled', false);
-    config()->set('error-pages.brand.name', 'Acme Portal');
+    config()->set('janitor.filament.enabled', false);
+    config()->set('janitor.brand.name', 'Acme Portal');
 
     $this->get('/missing')->assertStatus(404)->assertSee('Acme Portal');
 });
@@ -55,22 +55,22 @@ it('does not consult Filament at all when the integration is disabled', function
 it('keeps explicit config ahead of anything Filament could supply', function (): void {
     Filament::fake(true);
 
-    config()->set('error-pages.filament.enabled', true);
-    config()->set('error-pages.filament.only_on_panel_routes', false);
-    config()->set('error-pages.brand.name', 'Explicit Name');
-    config()->set('error-pages.colors.primary', '#b91c1c');
+    config()->set('janitor.filament.enabled', true);
+    config()->set('janitor.filament.only_on_panel_routes', false);
+    config()->set('janitor.brand.name', 'Explicit Name');
+    config()->set('janitor.colors.primary', '#b91c1c');
 
     $this->get('/missing')
         ->assertSee('Explicit Name')
-        ->assertSee('--ep-primary: #b91c1c', false);
+        ->assertSee('--jn-primary: #b91c1c', false);
 });
 
 it('survives a Filament API that throws', function (): void {
     // A Filament upgrade renaming a method must never turn a 404 into a 500.
     Filament::fake(true);
 
-    config()->set('error-pages.filament.enabled', true);
-    config()->set('error-pages.filament.only_on_panel_routes', false);
+    config()->set('janitor.filament.enabled', true);
+    config()->set('janitor.filament.only_on_panel_routes', false);
 
     $this->get('/missing')->assertStatus(404);
 });

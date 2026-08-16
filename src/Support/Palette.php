@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Vvdboogaard\ErrorPages\Support;
+namespace FreshwaveOnline\Janitor\Support;
 
-use Vvdboogaard\ErrorPages\Enums\Theme;
+use FreshwaveOnline\Janitor\Enums\Theme;
 
 /**
  * Turns the configured primary colour into the full set of CSS custom
@@ -101,7 +101,7 @@ final class Palette
         $lines = [];
 
         foreach ($this->forScheme($scheme) as $token => $value) {
-            $lines[] = $indent.'--ep-'.$token.': '.$value.';';
+            $lines[] = $indent.'--jn-'.$token.': '.$value.';';
         }
 
         return implode("\n", $lines);
