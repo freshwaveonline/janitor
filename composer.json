@@ -1,0 +1,77 @@
+{
+    "name": "vvdboogaard/laravel-error-pages",
+    "description": "Informative, white-label error pages for Laravel with message numbers, request IDs, retry countdowns, Livewire pop-ups and optional Filament branding.",
+    "keywords": [
+        "laravel",
+        "error-pages",
+        "exceptions",
+        "error-handling",
+        "livewire",
+        "filament"
+    ],
+    "homepage": "https://github.com/vvdboogaard/laravel-error-pages",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vincent van den Boogaard",
+            "email": "vincent@wemakeitspark.nl",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0",
+        "nesbot/carbon": "^2.72|^3.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.9|^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^9.5|^10.0",
+        "pestphp/pest": "^3.5",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan-deprecation-rules": "^1.2|^2.0"
+    },
+    "suggest": {
+        "livewire/livewire": "Render errors as a positioned pop-up instead of a full page during Livewire requests.",
+        "filament/filament": "Inherit brand name, logo and primary colour from the active Filament panel."
+    },
+    "autoload": {
+        "psr-4": {
+            "Vvdboogaard\\ErrorPages\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vvdboogaard\\ErrorPages\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "lint": "vendor/bin/pint --test"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vvdboogaard\\ErrorPages\\ErrorPagesServiceProvider"
+            ],
+            "aliases": {
+                "ErrorPages": "Vvdboogaard\\ErrorPages\\Facades\\ErrorPages"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

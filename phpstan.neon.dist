@@ -1,0 +1,29 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+
+parameters:
+    level: max
+
+    paths:
+        - src
+        - config
+
+    # Livewire and Filament are optional dependencies, absent in CI, so PHPStan
+    # cannot see their classes. Every call into them is already guarded by
+    # class_exists() and try/catch at runtime.
+    ignoreErrors:
+        -
+            identifier: class.notFound
+            paths:
+                - src/Integrations/Filament.php
+                - src/Http/Middleware/InjectErrorPagesAssets.php
+                - src/ErrorPagesServiceProvider.php
+        -
+            identifier: staticMethod.notFound
+            path: src/Integrations/Filament.php
+        -
+            identifier: method.nonObject
+            path: src/Integrations/Filament.php
+
+    treatPhpDocTypesAsCertain: false
