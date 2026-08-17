@@ -16,6 +16,7 @@ use FreshwaveOnline\Janitor\Data\ErrorContext;
 use FreshwaveOnline\Janitor\Data\ExceptionDetails;
 use FreshwaveOnline\Janitor\Enums\DetailVisibility;
 use FreshwaveOnline\Janitor\Enums\Theme;
+use FreshwaveOnline\Janitor\Support\Guard;
 use FreshwaveOnline\Janitor\Support\Icons;
 use FreshwaveOnline\Janitor\Support\Palette;
 use Illuminate\Contracts\Config\Repository as Config;
@@ -146,19 +147,21 @@ class ErrorContextFactory implements ErrorContextBuilder
     {
         $replace = $this->replacements($statusCode, $messageNumber, $branding);
 
-        foreach ($this->translationKeys($statusCode, $key) as $candidate) {
-            if (! $this->translator->has($candidate, $this->locale())) {
-                continue;
+        return Guard::value(function () use ($statusCode, $key, $replace): ?string {
+            foreach ($this->translationKeys($statusCode, $key) as $candidate) {
+                if (! $this->translator->has($candidate, $this->locale())) {
+                    continue;
+                }
+
+                $line = $this->translator->get($candidate, $replace, $this->locale());
+
+                if (is_string($line) && trim($line) !== '' && $line !== $candidate) {
+                    return $line;
+                }
             }
 
-            $line = $this->translator->get($candidate, $replace, $this->locale());
-
-            if (is_string($line) && trim($line) !== '' && $line !== $candidate) {
-                return $line;
-            }
-        }
-
-        return null;
+            return null;
+        });
     }
 
     protected function line(int $statusCode, string $key, ?string $messageNumber, Branding $branding): string
@@ -236,22 +239,24 @@ class ErrorContextFactory implements ErrorContextBuilder
      */
     protected function suggestions(int $statusCode, Branding $branding): array
     {
-        foreach ($this->translationKeys($statusCode, 'suggestions') as $candidate) {
-            if (! $this->translator->has($candidate, $this->locale())) {
-                continue;
+        return Guard::value(function () use ($statusCode, $branding): array {
+            foreach ($this->translationKeys($statusCode, 'suggestions') as $candidate) {
+                if (! $this->translator->has($candidate, $this->locale())) {
+                    continue;
+                }
+
+                $lines = $this->translator->get($candidate, $this->replacements($statusCode, null, $branding), $this->locale());
+
+                if (is_array($lines)) {
+                    return array_values(array_filter(
+                        array_map(static fn (mixed $line): string => is_string($line) ? $line : '', $lines),
+                        static fn (string $line): bool => trim($line) !== '',
+                    ));
+                }
             }
 
-            $lines = $this->translator->get($candidate, $this->replacements($statusCode, null, $branding), $this->locale());
-
-            if (is_array($lines)) {
-                return array_values(array_filter(
-                    array_map(static fn (mixed $line): string => is_string($line) ? $line : '', $lines),
-                    static fn (string $line): bool => trim($line) !== '',
-                ));
-            }
-        }
-
-        return [];
+            return [];
+        }, []);
     }
 
     /*
@@ -267,7 +272,8 @@ class ErrorContextFactory implements ErrorContextBuilder
 
     protected function locale(): string
     {
-        return $this->stringSetting('locale') ?? $this->app->getLocale();
+        return $this->stringSetting('locale')
+            ?? Guard::value(fn (): string => $this->app->getLocale(), 'en');
     }
 
     /*
@@ -284,7 +290,7 @@ class ErrorContextFactory implements ErrorContextBuilder
 
         return ExceptionDetails::fromThrowable(
             $exception,
-            $this->app->basePath(),
+            Guard::value(fn (): string => $this->app->basePath(), ''),
             $this->intSetting('details.stack_frames', 12),
         );
     }
@@ -298,7 +304,7 @@ class ErrorContextFactory implements ErrorContextBuilder
         /** @var list<string> $environments */
         $environments = $this->setting('details.environments') ?? [];
 
-        return in_array($this->app->environment(), $environments, true);
+        return Guard::value(fn (): bool => in_array($this->app->environment(), $environments, true), false);
     }
 
     /*

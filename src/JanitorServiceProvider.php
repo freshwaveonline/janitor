@@ -17,6 +17,7 @@ use FreshwaveOnline\Janitor\Http\Middleware\AssignRequestId;
 use FreshwaveOnline\Janitor\Http\Middleware\InjectJanitorAssets;
 use FreshwaveOnline\Janitor\Support\ActionFactory;
 use FreshwaveOnline\Janitor\Support\ConfigBranding;
+use FreshwaveOnline\Janitor\Support\Guard;
 use FreshwaveOnline\Janitor\Support\MessageNumber;
 use FreshwaveOnline\Janitor\Support\RequestId;
 use FreshwaveOnline\Janitor\Support\RetryAfter;
@@ -125,7 +126,12 @@ class JanitorServiceProvider extends ServiceProvider
 
         if (method_exists($handler, 'renderable')) {
             $handler->renderable(function (Throwable $exception, Request $request): ?SymfonyResponse {
-                return $this->app->make(ErrorRenderer::class)->render($request, $exception);
+                // Resolving the renderer touches the container and the config.
+                // If that fails, Laravel's own handler still works — returning
+                // null is what hands the exception back to it.
+                return Guard::value(
+                    fn (): ?SymfonyResponse => $this->app->make(ErrorRenderer::class)->render($request, $exception),
+                );
             });
         }
 

@@ -27,7 +27,7 @@ class ConfigBranding implements BrandingResolver
         return new Branding(
             name: $this->name($request),
             logo: $this->logo($request),
-            logoDark: $this->string('brand.logo_dark'),
+            logoDark: Url::asset($this->string('brand.logo_dark')),
             logoHeight: $this->integer('brand.logo_height', 32),
             showNameBesideLogo: $this->setting('brand.show_name_beside_logo') === true,
             primaryColor: $this->primaryColor($request),
@@ -37,7 +37,7 @@ class ConfigBranding implements BrandingResolver
             homeUrl: $this->homeUrl($request),
             loginUrl: $this->loginUrl($request),
             supportEmail: $this->supportEmail($statusCode),
-            statusPageUrl: $this->string('links.status_page'),
+            statusPageUrl: Url::link($this->string('links.status_page')),
         );
     }
 
@@ -64,8 +64,8 @@ class ConfigBranding implements BrandingResolver
 
     protected function logo(Request $request): ?string
     {
-        return $this->string('brand.logo')
-            ?? ($this->inheritsFromFilament('brand_logo', $request) ? Filament::brandLogo($request) : null);
+        return Url::asset($this->string('brand.logo')
+            ?? ($this->inheritsFromFilament('brand_logo', $request) ? Filament::brandLogo($request) : null));
     }
 
     protected function primaryColor(Request $request): ?string
@@ -84,42 +84,42 @@ class ConfigBranding implements BrandingResolver
 
     protected function homeUrl(Request $request): ?string
     {
-        $explicit = $this->string('links.home');
+        $explicit = Url::link($this->string('links.home'));
 
         if ($explicit !== null) {
             return $explicit;
         }
 
-        $routeName = $this->string('links.home_route');
+        $fromRoute = $this->route($this->string('links.home_route'));
 
-        if ($routeName !== null && Route::has($routeName)) {
-            return route($routeName);
+        if ($fromRoute !== null) {
+            return $fromRoute;
         }
 
         if ($this->inheritsFromFilament('home_url', $request)) {
-            $url = Filament::homeUrl($request);
+            $url = Url::link(Filament::homeUrl($request));
 
             if ($url !== null) {
                 return $url;
             }
         }
 
-        return url('/');
+        // Without a working URL generator, a relative link still gets the
+        // visitor home.
+        return Guard::value(static fn (): string => url('/'), '/');
     }
 
     protected function loginUrl(Request $request): ?string
     {
         if ($this->inheritsFromFilament('login_url', $request)) {
-            $url = Filament::loginUrl($request);
+            $url = Url::link(Filament::loginUrl($request));
 
             if ($url !== null) {
                 return $url;
             }
         }
 
-        $routeName = $this->string('links.login_route');
-
-        return $routeName !== null && Route::has($routeName) ? route($routeName) : null;
+        return $this->route($this->string('links.login_route'));
     }
 
     /**
@@ -174,5 +174,24 @@ class ConfigBranding implements BrandingResolver
         $value = $this->setting($key);
 
         return is_int($value) ? $value : $default;
+    }
+
+    /**
+     * Resolve a named route, or null when the name is unset, unknown, or the
+     * router cannot answer at all.
+     */
+    protected function route(?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        return Guard::value(static function () use ($name): ?string {
+            if (! Route::has($name)) {
+                return null;
+            }
+
+            return Url::link(route($name));
+        });
     }
 }

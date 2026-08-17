@@ -6,6 +6,7 @@ namespace FreshwaveOnline\Janitor\Http\Middleware;
 
 use Closure;
 use FreshwaveOnline\Janitor\Enums\LivewireErrorMode;
+use FreshwaveOnline\Janitor\Support\Guard;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class InjectJanitorAssets
         /** @var Response $response */
         $response = $next($request);
 
-        if (! $this->shouldInject($request, $response)) {
+        if (! Guard::value(fn (): bool => $this->shouldInject($request, $response), false)) {
             return $response;
         }
 
@@ -48,7 +49,14 @@ class InjectJanitorAssets
             return $response;
         }
 
-        $script = $this->views->make('janitor::partials.livewire-script')->render();
+        // This middleware runs on responses that succeeded. A partial that
+        // cannot render is a reason to ship the page without the handler, never
+        // a reason to turn a working page into a 500.
+        $script = Guard::value(fn (): string => $this->views->make('janitor::partials.livewire-script')->render(), '');
+
+        if ($script === '') {
+            return $response;
+        }
 
         $response->setContent(
             substr($content, 0, $position).$script.substr($content, $position)
