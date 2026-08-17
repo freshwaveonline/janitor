@@ -54,13 +54,19 @@ exact error in your logs.
 
 ## Installation
 
-**Requirements:** PHP 8.2+, Laravel 11 or 12.
+**Requirements: PHP 8.2+ and Laravel 12 or 13.**
 
-> Janitor is at `0.0.x`. It is tested and in use, but the API may still change
-> between releases — pin an exact version if that matters to you.
+Laravel 13 requires PHP 8.3+, so PHP 8.2 pairs with Laravel 12 only. Laravel 11
+is not supported.
 
 ```bash
 composer require freshwaveonline/janitor
+```
+
+To pin the major explicitly:
+
+```bash
+composer require freshwaveonline/janitor:^1.0
 ```
 
 The package registers itself through Laravel's auto-discovery and starts
@@ -84,7 +90,7 @@ Composer at it directly. In the **consuming application's** `composer.json`:
 ```
 
 ```bash
-composer require freshwaveonline/janitor:^0.0.1
+composer require freshwaveonline/janitor:^1.0
 ```
 
 Composer needs credentials for the private repository. Either a GitHub token
@@ -99,7 +105,7 @@ or SSH, by using `git@github.com:freshwaveonline/janitor.git` as the
 user or a deploy key rather than a personal token.
 
 To track the branch rather than a release, require it directly — `dev-main` is
-aliased to `0.0.x-dev`:
+aliased to `1.0.x-dev`:
 
 ```bash
 composer require freshwaveonline/janitor:dev-main
@@ -133,13 +139,15 @@ composer require freshwaveonline/janitor:@dev
 Composer resolves versions from git tags, so cutting a release is a tag:
 
 ```bash
-git tag v0.0.2
-git push origin v0.0.2
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
-That runs the `release` workflow, which validates `composer.json`, runs the
-suite and publishes a GitHub release with generated notes. The Packagist GitHub
-App picks the tag up from there.
+That runs the `release` workflow, which validates `composer.json` with
+`composer validate --strict`, runs the suite against both supported Laravel
+majors, and publishes a GitHub release with generated notes only if all of that
+passes. The Packagist GitHub App picks the tag up from there, and the
+`update changelog` workflow writes the release notes back into `CHANGELOG.md`.
 
 ## Configuring
 
@@ -604,23 +612,37 @@ messages are not: 404 and every 5xx are excluded by default, so a
 
 ```bash
 composer test       # Pest
-composer analyse    # PHPStan / Larastan
-composer format     # Laravel Pint
+composer analyse    # PHPStan / Larastan at level max
+composer lint       # Laravel Pint, read-only
+composer format     # Laravel Pint, rewrites
+composer check      # all of the above, plus composer validate --strict
 ```
 
-If PHPStan reports pre-existing findings you would rather fix over time:
-
-```bash
-vendor/bin/phpstan analyse --generate-baseline
-```
-
-then uncomment the `baseline` line in `phpstan.neon.dist`.
+PHPStan runs at `level: max` with no baseline, and the package's own config
+directory is analysed alongside `src`. Larastan and
+`phpstan/phpstan-deprecation-rules` are registered by
+`phpstan/extension-installer`, so they must **not** also be listed under
+`includes:` in `phpstan.neon.dist` — PHPStan aborts with "These files are
+included multiple times" before analysing anything.
 
 ## Contributing
 
-Pull requests are welcome. Please run `composer test` and `composer format`
-before opening one — CI runs the suite against PHP 8.2–8.4 and Laravel 11–12, on
-both the lowest and the highest resolvable dependencies.
+Pull requests are welcome. Please run `composer check` before opening one — it
+runs the same four things CI does: `composer validate --strict`, Pint, PHPStan
+and Pest.
+
+CI runs the suite against every supported pairing, on both the lowest and the
+highest resolvable dependencies:
+
+| PHP | Laravel 12 | Laravel 13 |
+|-----|:----------:|:----------:|
+| 8.2 | ✅         | —          |
+| 8.3 | ✅         | ✅         |
+| 8.4 | ✅         | ✅         |
+| 8.5 | —          | ✅         |
+
+CI never rewrites your code. If Pint reports a violation, the check fails and
+asks you to run `composer format` locally.
 
 ## Security
 

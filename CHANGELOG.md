@@ -5,7 +5,53 @@ All notable changes to `janitor` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.0.0](https://github.com/freshwaveonline/janitor/releases/tag/v0.0.1/compare/v0.0.1...v1.0.0) - 2026-08-16
+## [Unreleased](https://github.com/freshwaveonline/janitor/compare/v1.0.0...HEAD)
+
+### Changed
+
+- **Laravel 11 is no longer supported.** The package targets Laravel 12 and 13,
+  which means `illuminate/*` at `^12.0|^13.0` and Carbon 3. PHP 8.2 remains the
+  floor for Laravel 12; Laravel 13 requires PHP 8.3.
+- `colors.primary` now ships as `null` rather than `#4f46e5`. The rendered
+  default is unchanged — the palette falls back to the same colour — but "no
+  colour was chosen here" is now expressible, which is what lets an active
+  Filament panel supply the accent. An application with a **published** config
+  file keeps its literal `#4f46e5`, and that value now correctly wins over the
+  panel; set it to `null` to inherit from Filament again.
+- Explicit config wins over Filament for the primary colour and the login URL,
+  matching the documented rule and the rest of the branding resolver.
+- JSON error bodies are encoded with Symfony's escaping defaults
+  (`JSON_HEX_TAG` and friends). Decoded values are unchanged.
+
+### Added
+
+- A minimal fallback page. When rendering the real page throws — a missing view,
+  a broken translator, an integration that changed under the package — the
+  response is a plain page built without config, translations, views or URL
+  generation, carrying the status code and nothing from the exception.
+- Every collaborator is guarded individually, so a failing branding resolver,
+  action resolver, message-number generator, request-id resolver or retry
+  resolver costs its own contribution instead of the whole page.
+- Action and branding URLs are filtered by scheme: `javascript:`, `vbscript:`,
+  `data:`, `file:` and `blob:` are refused for links, matching the way browsers
+  normalise a URL before resolving its scheme.
+
+### Fixed
+
+- PHPStan aborted before analysing anything, because Larastan's `extension.neon`
+  and phpstan-deprecation-rules' `rules.neon` were included on top of
+  `phpstan/extension-installer`. The 54 errors underneath are fixed too.
+- `request_id.response_header` set to `null` now disables the response header,
+  as the config file has always said it does.
+- A request-id resolver that throws no longer takes down every successful
+  request through the global middleware.
+- The asset-injection middleware ships the page without the Livewire handler
+  when the partial cannot render, instead of turning a working page into a 500.
+
+## [v1.0.0](https://github.com/freshwaveonline/janitor/compare/v0.0.1...v1.0.0) - 2026-08-16
+
+First stable release. The feature set is the one described under `0.0.1` below;
+this tag promotes it out of `0.0.x` and commits to semantic versioning for it.
 
 **Full Changelog**: https://github.com/freshwaveonline/janitor/commits/v1.0.0
 

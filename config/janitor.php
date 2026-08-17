@@ -251,7 +251,7 @@ return [
         'response_header' => 'X-Message-Number',
 
         // Push the message number into Laravel's log context so the number on
-        // screen can be grepped straight out of your logs (Laravel 11+).
+        // screen can be grepped straight out of your logs.
         'log_context' => true,
     ],
 
