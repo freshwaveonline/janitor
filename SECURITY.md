@@ -2,11 +2,14 @@
 
 ## Supported versions
 
-| Version | Supported |
-|---------|-----------|
-| 1.x     | ✅        |
+| Version | Supported | Laravel  |
+|---------|-----------|----------|
+| 2.x     | ✅        | 12, 13   |
+| 1.x     | ❌        | 11, 12   |
 
-Janitor supports Laravel 12 and 13 on PHP 8.2+ (Laravel 13 requires PHP 8.3+).
+Janitor 2.x supports Laravel 12 and 13 on PHP 8.2+ (Laravel 13 requires PHP
+8.3+). 1.x is no longer maintained; an application still on Laravel 11 should
+upgrade the framework rather than stay on 1.x for security fixes.
 
 ## Reporting a vulnerability
 

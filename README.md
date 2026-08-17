@@ -66,7 +66,7 @@ composer require freshwaveonline/janitor
 To pin the major explicitly:
 
 ```bash
-composer require freshwaveonline/janitor:^1.0
+composer require freshwaveonline/janitor:^2.0
 ```
 
 The package registers itself through Laravel's auto-discovery and starts
@@ -90,7 +90,7 @@ Composer at it directly. In the **consuming application's** `composer.json`:
 ```
 
 ```bash
-composer require freshwaveonline/janitor:^1.0
+composer require freshwaveonline/janitor:^2.0
 ```
 
 Composer needs credentials for the private repository. Either a GitHub token
@@ -105,7 +105,7 @@ or SSH, by using `git@github.com:freshwaveonline/janitor.git` as the
 user or a deploy key rather than a personal token.
 
 To track the branch rather than a release, require it directly — `dev-main` is
-aliased to `1.0.x-dev`:
+aliased to `2.0.x-dev`:
 
 ```bash
 composer require freshwaveonline/janitor:dev-main
@@ -139,8 +139,8 @@ composer require freshwaveonline/janitor:@dev
 Composer resolves versions from git tags, so cutting a release is a tag:
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v2.0.1
+git push origin v2.0.1
 ```
 
 That runs the `release` workflow, which validates `composer.json` with
