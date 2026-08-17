@@ -33,7 +33,12 @@ function refreshViews(): void
 {
     clearstatcache();
     app('view')->flushFinderCache();
-    File::cleanDirectory((string) config('view.compiled'));
+
+    // Only the compiled templates: the directory itself belongs to the test
+    // skeleton, .gitignore and all.
+    foreach (File::glob(rtrim((string) config('view.compiled'), '/').'/*.php') as $compiled) {
+        File::delete($compiled);
+    }
 }
 
 function publishViews(): string

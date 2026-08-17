@@ -129,9 +129,13 @@ class JanitorServiceProvider extends ServiceProvider
                 // Resolving the renderer touches the container and the config.
                 // If that fails, Laravel's own handler still works — returning
                 // null is what hands the exception back to it.
-                return Guard::value(
-                    fn (): ?SymfonyResponse => $this->app->make(ErrorRenderer::class)->render($request, $exception),
-                );
+                return Guard::value(function () use ($request, $exception): ?SymfonyResponse {
+                    $renderer = $this->app->make(ErrorRenderer::class);
+
+                    return $renderer instanceof ErrorRenderer
+                        ? $renderer->render($request, $exception)
+                        : null;
+                });
             });
         }
 
@@ -144,16 +148,21 @@ class JanitorServiceProvider extends ServiceProvider
 
                 try {
                     $numbers = $this->app->make(MessageNumberGenerator::class);
-                    $status = $this->app->make(ErrorRenderer::class)->statusFor($exception);
+                    $renderer = $this->app->make(ErrorRenderer::class);
 
-                    $number = $numbers->for($exception, $status);
+                    if ($numbers instanceof MessageNumberGenerator && $renderer instanceof ErrorRenderer) {
+                        $number = $numbers->for($exception, $renderer->statusFor($exception));
 
-                    if ($number !== null) {
-                        $context['message_number'] = $number;
+                        if ($number !== null) {
+                            $context['message_number'] = $number;
+                        }
                     }
 
-                    if ($this->app->bound('request')) {
-                        $requestId = $this->app->make(RequestIdResolver::class)->resolve($this->app->make('request'));
+                    $requestIds = $this->app->make(RequestIdResolver::class);
+                    $request = $this->app->bound('request') ? $this->app->make('request') : null;
+
+                    if ($requestIds instanceof RequestIdResolver && $request instanceof Request) {
+                        $requestId = $requestIds->resolve($request);
 
                         if ($requestId !== null) {
                             $context['request_id'] = $requestId;
@@ -229,7 +238,7 @@ class JanitorServiceProvider extends ServiceProvider
         // `null` means "local only" — the safe default for a route that renders
         // stack traces on demand.
         return $setting === null
-            ? $this->app->environment('local')
+            ? $this->app->environment('local') === true
             : $setting === true;
     }
 
