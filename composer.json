@@ -5,40 +5,48 @@
         "laravel",
         "janitor",
         "error-pages",
-        "exceptions",
         "error-handling",
+        "exceptions",
+        "http-errors",
         "livewire",
-        "filament"
+        "filament",
+        "white-label"
     ],
     "homepage": "https://github.com/freshwaveonline/janitor",
+    "readme": "README.md",
     "license": "MIT",
     "authors": [
         {
             "name": "Vincent van den Boogaard",
             "email": "mail@freshwave.online",
+            "homepage": "https://freshwave.online",
             "role": "Developer"
         }
     ],
     "support": {
         "issues": "https://github.com/freshwaveonline/janitor/issues",
         "source": "https://github.com/freshwaveonline/janitor",
-        "docs": "https://github.com/freshwaveonline/janitor#readme"
+        "docs": "https://github.com/freshwaveonline/janitor#readme",
+        "security": "https://github.com/freshwaveonline/janitor/security/policy"
     },
     "require": {
         "php": "^8.2",
-        "illuminate/contracts": "^11.0|^12.0",
-        "illuminate/http": "^11.0|^12.0",
-        "illuminate/support": "^11.0|^12.0",
-        "nesbot/carbon": "^2.72|^3.0"
+        "illuminate/console": "^12.0|^13.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/view": "^12.0|^13.0",
+        "nesbot/carbon": "^3.8.4",
+        "symfony/http-kernel": "^7.2|^8.0"
     },
     "require-dev": {
-        "larastan/larastan": "^2.9|^3.0",
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.18",
-        "orchestra/testbench": "^9.5|^10.0",
-        "pestphp/pest": "^3.5",
-        "pestphp/pest-plugin-laravel": "^3.0",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.5|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
         "phpstan/extension-installer": "^1.4",
-        "phpstan/phpstan-deprecation-rules": "^1.2|^2.0"
+        "phpstan/phpstan-deprecation-rules": "^2.0"
     },
     "suggest": {
         "livewire/livewire": "Render errors as a positioned pop-up instead of a full page during Livewire requests.",
@@ -55,11 +63,25 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
         "analyse": "vendor/bin/phpstan analyse",
+        "check": [
+            "@composer validate --strict",
+            "@lint",
+            "@analyse",
+            "@test"
+        ],
         "format": "vendor/bin/pint",
-        "lint": "vendor/bin/pint --test"
+        "lint": "vendor/bin/pint --test",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage"
+    },
+    "scripts-descriptions": {
+        "analyse": "Run PHPStan static analysis at the configured level.",
+        "check": "Run every check CI runs: composer validation, code style, static analysis and tests.",
+        "format": "Rewrite the code base with Laravel Pint.",
+        "lint": "Report Laravel Pint violations without changing files.",
+        "test": "Run the Pest test suite.",
+        "test-coverage": "Run the Pest test suite with a coverage report."
     },
     "config": {
         "sort-packages": true,
@@ -78,7 +100,7 @@
             }
         },
         "branch-alias": {
-            "dev-main": "0.0.x-dev"
+            "dev-main": "1.0.x-dev"
         }
     },
     "minimum-stability": "stable",

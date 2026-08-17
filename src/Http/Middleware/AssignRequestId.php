@@ -6,6 +6,7 @@ namespace FreshwaveOnline\Janitor\Http\Middleware;
 
 use Closure;
 use FreshwaveOnline\Janitor\Contracts\RequestIdResolver;
+use FreshwaveOnline\Janitor\Support\Guard;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,12 +23,14 @@ class AssignRequestId
 
     public function handle(Request $request, Closure $next): Response
     {
-        $id = $this->requestId->resolve($request);
+        // Global middleware, so this runs on every successful request too. A
+        // resolver that cannot answer costs the correlation id and nothing else.
+        $id = Guard::value(fn (): ?string => $this->requestId->resolve($request));
 
         /** @var Response $response */
         $response = $next($request);
 
-        $header = $this->requestId->responseHeader();
+        $header = Guard::value(fn (): ?string => $this->requestId->responseHeader());
 
         if ($id !== null && $header !== null && ! $response->headers->has($header)) {
             $response->headers->set($header, $id);

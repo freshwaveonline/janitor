@@ -14,12 +14,16 @@ composer install
 ```bash
 composer test       # Pest
 composer analyse    # PHPStan / Larastan
-composer format     # Laravel Pint
+composer lint       # Laravel Pint, read-only
+composer format     # Laravel Pint, rewrites
+composer check      # all of the above, plus composer validate --strict
 ```
 
-CI runs the suite against PHP 8.2–8.4 and Laravel 11–12, on both the lowest and
-the highest resolvable dependencies. Run `composer test` and `composer format`
-before opening a pull request and the matrix will usually agree with you.
+CI runs the suite against Laravel 12 on PHP 8.2–8.4 and Laravel 13 on PHP
+8.3–8.5, on both the lowest and the highest resolvable dependencies. Run
+`composer check` — validation, code style, static analysis and tests, the same
+four things CI runs — before opening a pull request and the matrix will usually
+agree with you.
 
 ## Seeing your change
 

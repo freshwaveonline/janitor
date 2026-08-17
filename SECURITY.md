@@ -4,7 +4,9 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.0.x   | ✅        |
+| 1.x     | ✅        |
+
+Janitor supports Laravel 12 and 13 on PHP 8.2+ (Laravel 13 requires PHP 8.3+).
 
 ## Reporting a vulnerability
 
@@ -35,5 +37,15 @@ Some notes on the parts most worth scrutinising, so a report can get to the poin
 - **Abort messages.** Messages passed to `abort()` are shown only for the status
   codes in `messages.use_exception_message_codes`. 404 and every 5xx are
   excluded by default so framework-generated messages cannot leak internals.
+- **Link targets.** Every URL that reaches an `href` or an `src` — from config,
+  from a custom `BrandingResolver`, or from the active Filament panel — is
+  filtered by scheme. Escaping makes a URL safe as markup and does nothing about
+  what it does when followed, so `javascript:`, `vbscript:`, `data:`, `file:`
+  and `blob:` are refused for links. A URL that executes on click is a
+  vulnerability.
 - **Error pages are never cached or indexed.** They carry
   `X-Robots-Tag: noindex, nofollow`.
+- **The fallback page.** When rendering fails, the response is built without
+  config, translations or views, and carries the status code and a fixed
+  sentence. It must never carry anything from the exception, precisely because
+  the checks that decide what may be shown are what failed.

@@ -1,6 +1,7 @@
-includes:
-    - vendor/larastan/larastan/extension.neon
-    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+# Larastan and phpstan/phpstan-deprecation-rules ship a phpstan/extension-installer
+# manifest, so their extension.neon and rules.neon are registered automatically.
+# Including them here as well makes PHPStan abort with "These files are included
+# multiple times" before it analyses a single line.
 
 parameters:
     level: max
@@ -9,21 +10,23 @@ parameters:
         - src
         - config
 
-    # Livewire and Filament are optional dependencies, absent in CI, so PHPStan
-    # cannot see their classes. Every call into them is already guarded by
-    # class_exists() and try/catch at runtime.
     ignoreErrors:
+        # Livewire and Filament are optional dependencies, absent in CI, so
+        # PHPStan cannot see their classes. Every call into them is guarded by
+        # class_exists() and wrapped in try/catch at runtime.
         -
             identifier: class.notFound
-            paths:
-                - src/Integrations/Filament.php
-                - src/Http/Middleware/InjectJanitorAssets.php
-                - src/JanitorServiceProvider.php
-        -
-            identifier: staticMethod.notFound
             path: src/Integrations/Filament.php
         -
             identifier: method.nonObject
             path: src/Integrations/Filament.php
+
+        # Larastan resolves "the config directory" against a host application.
+        # Analysed on its own, a package's own config file is not recognised as
+        # one, so every env() default in it is reported. These calls only ever
+        # run while the file is being loaded as config.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/janitor.php
 
     treatPhpDocTypesAsCertain: false

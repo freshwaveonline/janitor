@@ -4,9 +4,13 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
+# Read-only on purpose. CI reports formatting; it never rewrites or commits
+# code on an author's behalf — a push from CI re-triggers CI, invalidates
+# review approvals, and hides the change from the person who wrote it.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pint-${{ github.head_ref || github.run_id }}
@@ -19,40 +23,26 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # A PR from a fork gets a read-only token; the fix-and-commit step
-          # below is skipped for those and the check simply reports.
-          ref: ${{ github.head_ref }}
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           dependency-versions: highest
 
       - name: Check formatting
-        id: check
-        continue-on-error: true
-        run: vendor/bin/pint --test
-
-      - name: Fix formatting
-        if: steps.check.outcome == 'failure' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        run: vendor/bin/pint
-
-      - name: Commit the fixes
-        if: steps.check.outcome == 'failure' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'style: apply Laravel Pint'
-
-      - name: Fail when formatting could not be fixed automatically
-        if: steps.check.outcome == 'failure' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository)
         run: |
-          echo "::error::Run 'composer format' locally and commit the result."
+          if vendor/bin/pint --test; then
+            exit 0
+          fi
+
+          echo "::error title=Formatting::Laravel Pint reported violations. Run 'composer format' locally and commit the result."
+          echo '### Formatting' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Run `composer format` locally and commit the result.' >> "$GITHUB_STEP_SUMMARY"
           exit 1

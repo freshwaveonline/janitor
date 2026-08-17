@@ -103,7 +103,10 @@ return [
     */
 
     'colors' => [
-        'primary' => env('JANITOR_PRIMARY', '#4f46e5'),
+        // Left unset on purpose: null means "nothing was chosen here", which is
+        // what lets an active Filament panel supply the accent instead. The
+        // rendered default is #4f46e5 either way.
+        'primary' => env('JANITOR_PRIMARY'),
         'light' => env('JANITOR_PRIMARY_LIGHT', null),
         'dark' => env('JANITOR_PRIMARY_DARK', null),
         'auto_contrast' => true,
@@ -248,7 +251,7 @@ return [
         'response_header' => 'X-Message-Number',
 
         // Push the message number into Laravel's log context so the number on
-        // screen can be grepped straight out of your logs (Laravel 11+).
+        // screen can be grepped straight out of your logs.
         'log_context' => true,
     ],
 

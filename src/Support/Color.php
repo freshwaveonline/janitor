@@ -44,7 +44,6 @@ final class Color
         }
 
         if (preg_match('/^#?([0-9a-f]{3})$/i', $value, $matches) === 1) {
-            /** @var string $digits */
             $digits = $matches[1];
 
             return self::make(
@@ -55,7 +54,6 @@ final class Color
         }
 
         if (preg_match('/^#?([0-9a-f]{6})$/i', $value, $matches) === 1) {
-            /** @var string $digits */
             $digits = $matches[1];
 
             return self::make(

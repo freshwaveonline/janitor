@@ -55,7 +55,7 @@ it('parses the X-RateLimit-Reset timestamp when Retry-After is absent', function
 
 it('reads the retry moment out of maintenance mode', function (): void {
     // This is exactly what `php artisan down --retry=600` produces in
-    // Laravel 11+: a plain HttpException carrying a Retry-After header.
+    // A plain HttpException carrying a Retry-After header.
     $exception = new HttpException(503, 'Service Unavailable', null, ['Retry-After' => '600']);
 
     expect(retryAfter()->resolve($exception)?->toDateTimeString())

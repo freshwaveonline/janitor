@@ -8,6 +8,7 @@ use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
 use FreshwaveOnline\Janitor\Contracts\ErrorRenderer;
 use FreshwaveOnline\Janitor\Data\ErrorContext;
 use FreshwaveOnline\Janitor\Enums\LivewireErrorMode;
+use FreshwaveOnline\Janitor\Support\Guard;
 use FreshwaveOnline\Janitor\Support\Icons;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Config\Repository as Config;
@@ -30,6 +31,29 @@ use Throwable;
  */
 class ErrorPageRenderer implements ErrorRenderer
 {
+    /**
+     * Symfony's own JSON defaults, which Illuminate\Http\JsonResponse does not
+     * apply. An error body echoes back what the client sent — a URL, an abort()
+     * message — so keeping `<`, `>`, `&`, `'` and `"` out of the wire encoding
+     * means the body stays inert if anything ever renders it as HTML.
+     */
+    protected const JSON_OPTIONS = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+
+    /**
+     * Wording for the fallback page, in English only: reaching it means the
+     * translator is among the things that cannot be relied on.
+     *
+     * @var array<int, string>
+     */
+    protected const MINIMAL_TITLES = [
+        401 => 'You need to sign in',
+        403 => 'You do not have access',
+        404 => 'Page not found',
+        419 => 'Your session expired',
+        429 => 'Too many requests',
+        503 => 'Temporarily unavailable',
+    ];
+
     public function __construct(
         protected readonly Application $app,
         protected readonly Config $config,
@@ -39,16 +63,29 @@ class ErrorPageRenderer implements ErrorRenderer
 
     public function render(Request $request, Throwable $exception): ?SymfonyResponse
     {
-        if (! $this->shouldHandle($request, $exception)) {
+        // Deciding whether to handle this reads config. If even that fails the
+        // application is too far gone to second-guess, so hand the exception
+        // back to the framework, which renders without touching this package.
+        $handle = Guard::value(fn (): bool => $this->shouldHandle($request, $exception), false);
+
+        if (! $handle) {
             return null;
         }
 
-        $status = $this->statusFor($exception);
-        $context = $this->factory->make($request, $exception, $status);
+        try {
+            $status = $this->statusFor($exception);
+            $context = $this->factory->make($request, $exception, $status);
 
-        $response = $this->respond($request, $context);
+            $response = $this->respond($request, $context);
 
-        return $this->withHeaders($response, $context, $exception);
+            return $this->withHeaders($response, $context, $exception);
+        } catch (Throwable) {
+            // Translations, views, the router, an optional integration — any of
+            // them can be part of what broke. A plain page still tells the
+            // visitor which status they hit; a second exception tells them
+            // nothing at all.
+            return $this->minimalResponse($request, $this->statusFor($exception));
+        }
     }
 
     /**
@@ -310,7 +347,7 @@ class ErrorPageRenderer implements ErrorRenderer
             $payload['exception'] = $context->details->toArray();
         }
 
-        return new JsonResponse($payload, $context->statusCode);
+        return new JsonResponse($payload, $context->statusCode, [], self::JSON_OPTIONS);
     }
 
     /**
@@ -336,7 +373,7 @@ class ErrorPageRenderer implements ErrorRenderer
         return new JsonResponse([
             'message' => $context->message,
             'janitor' => $this->livewirePayload($context),
-        ], $context->statusCode);
+        ], $context->statusCode, [], self::JSON_OPTIONS);
     }
 
     /**
@@ -371,8 +408,22 @@ class ErrorPageRenderer implements ErrorRenderer
         // Retry-After — dropping those would change the HTTP semantics.
         if ($exception instanceof HttpExceptionInterface) {
             foreach ($exception->getHeaders() as $name => $value) {
-                if (is_string($name) && (is_string($value) || is_array($value))) {
+                if (! is_string($name)) {
+                    continue;
+                }
+
+                if (is_string($value)) {
                     $response->headers->set($name, $value);
+
+                    continue;
+                }
+
+                if (is_array($value)) {
+                    $values = array_values(array_filter($value, 'is_string'));
+
+                    if ($values !== []) {
+                        $response->headers->set($name, $values);
+                    }
                 }
             }
         }
@@ -399,6 +450,46 @@ class ErrorPageRenderer implements ErrorRenderer
         }
 
         return $response;
+    }
+
+    /**
+     * The last resort, built from nothing but PHP: no config, no translations,
+     * no views, no URL generation.
+     *
+     * It carries the status code and a fixed sentence, and deliberately not the
+     * exception — this path runs precisely when the checks that normally decide
+     * what may be shown are the thing that failed.
+     */
+    protected function minimalResponse(Request $request, int $status): SymfonyResponse
+    {
+        $title = self::MINIMAL_TITLES[$status] ?? ($status < 500 ? 'Request failed' : 'Something went wrong');
+
+        $wantsJson = Guard::value(static fn (): bool => $request->expectsJson(), false);
+
+        if ($wantsJson) {
+            return new JsonResponse(['message' => $title, 'status' => $status], $status, [], self::JSON_OPTIONS);
+        }
+
+        $heading = htmlspecialchars((string) $status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $body = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return new Response(<<<HTML
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="robots" content="noindex, nofollow">
+            <title>{$heading}</title>
+            </head>
+            <body style="margin:0;display:grid;place-items:center;min-height:100vh;font:16px/1.5 system-ui,sans-serif;color:#18181b;background:#f4f4f5">
+            <main style="text-align:center;padding:2rem">
+            <h1 style="margin:0 0 .5rem;font-size:3rem">{$heading}</h1>
+            <p style="margin:0;color:#52525b">{$body}</p>
+            </main>
+            </body>
+            </html>
+            HTML, $status);
     }
 
     protected function stringConfig(string $key): ?string

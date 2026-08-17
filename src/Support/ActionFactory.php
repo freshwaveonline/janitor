@@ -86,13 +86,13 @@ class ActionFactory implements ActionResolver
         $branding = $context->branding;
         $external = false;
 
-        $url = match ($key) {
+        $url = Url::link(match ($key) {
             'home' => $branding->homeUrl,
             'login' => $branding->loginUrl,
             'support' => $context->supportMailto($this->string('links.support_subject')),
             'status_page' => $branding->statusPageUrl,
             default => null,
-        };
+        });
 
         // Link-style actions with nothing to link to are dead buttons.
         if ($preset['behaviour'] === 'link' && $url === null) {
@@ -140,8 +140,15 @@ class ActionFactory implements ActionResolver
         }
 
         // Route names are more portable than hard-coded URLs in a config file.
-        if (is_string($url) && ! str_contains($url, '/') && Route::has($url)) {
-            $url = route($url);
+        if (is_string($url) && ! str_contains($url, '/')) {
+            $name = $url;
+            $url = Guard::value(static fn (): string => Route::has($name) ? route($name) : $name, $name);
+        }
+
+        $url = Url::link(is_string($url) ? $url : null);
+
+        if ($behaviour === 'link' && $url === null) {
+            return null;
         }
 
         $icon = $definition['icon'] ?? null;
@@ -149,8 +156,8 @@ class ActionFactory implements ActionResolver
 
         return new ErrorAction(
             key: is_string($definition['key'] ?? null) ? (string) $definition['key'] : 'custom-'.substr(md5($label), 0, 6),
-            label: $this->translator->has($label) ? (string) $this->translator->get($label) : $label,
-            url: is_string($url) ? $url : null,
+            label: $this->translate($label),
+            url: $url,
             icon: is_string($icon) && Icons::exists($icon) ? $icon : null,
             style: in_array($style, [ErrorAction::STYLE_PRIMARY, ErrorAction::STYLE_SECONDARY, ErrorAction::STYLE_GHOST], true)
                 ? (string) $style
@@ -208,7 +215,19 @@ class ActionFactory implements ActionResolver
 
     protected function label(string $key): string
     {
-        return (string) $this->translator->get('janitor::ui.actions.'.$key);
+        return $this->translate('janitor::ui.actions.'.$key);
+    }
+
+    /**
+     * A missing or broken translator must not cost the visitor the button.
+     */
+    protected function translate(string $key): string
+    {
+        return Guard::value(function () use ($key): string {
+            $line = $this->translator->has($key) ? $this->translator->get($key) : $key;
+
+            return is_string($line) && $line !== '' ? $line : $key;
+        }, $key);
     }
 
     protected function setting(string $key, mixed $default = null): mixed

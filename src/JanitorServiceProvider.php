@@ -17,11 +17,13 @@ use FreshwaveOnline\Janitor\Http\Middleware\AssignRequestId;
 use FreshwaveOnline\Janitor\Http\Middleware\InjectJanitorAssets;
 use FreshwaveOnline\Janitor\Support\ActionFactory;
 use FreshwaveOnline\Janitor\Support\ConfigBranding;
+use FreshwaveOnline\Janitor\Support\Guard;
 use FreshwaveOnline\Janitor\Support\MessageNumber;
 use FreshwaveOnline\Janitor\Support\RequestId;
 use FreshwaveOnline\Janitor\Support\RetryAfter;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -45,28 +47,19 @@ class JanitorServiceProvider extends ServiceProvider
         //
         // The concrete classes stay bound under their own names too, so you can
         // decorate the default rather than replace it.
-        $this->app->singleton(MessageNumber::class, function ($app): MessageNumber {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.message_number', []);
-
+        $this->app->singleton(MessageNumber::class, function (Application $app): MessageNumber {
             /** @phpstan-ignore-next-line argument.type */
-            return new MessageNumber($config, $app->basePath());
+            return new MessageNumber(self::sectionOf($app, 'message_number'), $app->basePath());
         });
 
-        $this->app->singleton(RequestId::class, function ($app): RequestId {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.request_id', []);
-
+        $this->app->singleton(RequestId::class, function (Application $app): RequestId {
             /** @phpstan-ignore-next-line argument.type */
-            return new RequestId($config);
+            return new RequestId(self::sectionOf($app, 'request_id'));
         });
 
-        $this->app->singleton(RetryAfter::class, function ($app): RetryAfter {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.retry_after', []);
-
+        $this->app->singleton(RetryAfter::class, function (Application $app): RetryAfter {
             /** @phpstan-ignore-next-line argument.type */
-            return new RetryAfter($config);
+            return new RetryAfter(self::sectionOf($app, 'retry_after'));
         });
 
         $this->app->singleton(ConfigBranding::class);
@@ -133,7 +126,16 @@ class JanitorServiceProvider extends ServiceProvider
 
         if (method_exists($handler, 'renderable')) {
             $handler->renderable(function (Throwable $exception, Request $request): ?SymfonyResponse {
-                return $this->app->make(ErrorRenderer::class)->render($request, $exception);
+                // Resolving the renderer touches the container and the config.
+                // If that fails, Laravel's own handler still works — returning
+                // null is what hands the exception back to it.
+                return Guard::value(function () use ($request, $exception): ?SymfonyResponse {
+                    $renderer = $this->app->make(ErrorRenderer::class);
+
+                    return $renderer instanceof ErrorRenderer
+                        ? $renderer->render($request, $exception)
+                        : null;
+                });
             });
         }
 
@@ -146,16 +148,21 @@ class JanitorServiceProvider extends ServiceProvider
 
                 try {
                     $numbers = $this->app->make(MessageNumberGenerator::class);
-                    $status = $this->app->make(ErrorRenderer::class)->statusFor($exception);
+                    $renderer = $this->app->make(ErrorRenderer::class);
 
-                    $number = $numbers->for($exception, $status);
+                    if ($numbers instanceof MessageNumberGenerator && $renderer instanceof ErrorRenderer) {
+                        $number = $numbers->for($exception, $renderer->statusFor($exception));
 
-                    if ($number !== null) {
-                        $context['message_number'] = $number;
+                        if ($number !== null) {
+                            $context['message_number'] = $number;
+                        }
                     }
 
-                    if ($this->app->bound('request')) {
-                        $requestId = $this->app->make(RequestIdResolver::class)->resolve($this->app->make('request'));
+                    $requestIds = $this->app->make(RequestIdResolver::class);
+                    $request = $this->app->bound('request') ? $this->app->make('request') : null;
+
+                    if ($requestIds instanceof RequestIdResolver && $request instanceof Request) {
+                        $requestId = $requestIds->resolve($request);
 
                         if ($requestId !== null) {
                             $context['request_id'] = $requestId;
@@ -210,7 +217,8 @@ class JanitorServiceProvider extends ServiceProvider
         }
 
         $config = $this->app->make(Config::class);
-        $path = trim((string) $config->get('janitor.preview.path', '_janitor'), '/');
+        $configured = $config->get('janitor.preview.path', '_janitor');
+        $path = trim(is_string($configured) ? $configured : '_janitor', '/');
 
         /** @var list<string> $middleware */
         $middleware = $config->get('janitor.preview.middleware', ['web']);
@@ -230,8 +238,22 @@ class JanitorServiceProvider extends ServiceProvider
         // `null` means "local only" — the safe default for a route that renders
         // stack traces on demand.
         return $setting === null
-            ? $this->app->environment('local')
+            ? $this->app->environment('local') === true
             : $setting === true;
+    }
+
+    /**
+     * Read one `janitor.*` sub-array, tolerating a config repository that has
+     * been replaced or emptied.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function sectionOf(Application $app, string $key): array
+    {
+        $config = Guard::value(static fn (): mixed => $app->make(Config::class)->get('janitor.'.$key, []), []);
+
+        /** @var array<string, mixed> */
+        return is_array($config) ? $config : [];
     }
 
     protected function registerBladeDirectives(): void
