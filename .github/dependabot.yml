@@ -24,15 +24,20 @@ updates:
           - 'laravel/pint'
           - 'orchestra/testbench'
     ignore:
-      # Major bumps of the framework constraints are a deliberate support
-      # decision, not something to merge automatically.
+      # Which Laravel majors this package supports is a deliberate decision —
+      # it drives the test matrix, the README and the minimum PHP version — so
+      # it is never something to merge automatically. Testbench majors track
+      # Laravel majors, so they follow the same rule.
       - dependency-name: 'illuminate/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'orchestra/testbench'
         update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 5
     labels:
       - dependencies
       - github-actions

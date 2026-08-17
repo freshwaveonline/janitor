@@ -7,6 +7,7 @@ on:
   schedule:
     # A weekly run catches breakage introduced by a dependency, not by a commit.
     - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,27 +18,33 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        php: ['8.2', '8.3', '8.4']
-        laravel: ['11.*', '12.*']
+        # Laravel 12 requires PHP 8.2, Laravel 13 requires PHP 8.3, so the
+        # combinations below are every pairing both majors actually support.
+        php: ['8.2', '8.3', '8.4', '8.5']
+        laravel: ['12.*', '13.*']
         stability: [prefer-lowest, prefer-stable]
+        exclude:
+          - php: '8.2'
+            laravel: '13.*'
+          - php: '8.5'
+            laravel: '12.*'
         include:
-          - laravel: '11.*'
-            testbench: '9.*'
           - laravel: '12.*'
             testbench: '10.*'
+          - laravel: '13.*'
+            testbench: '11.*'
 
-    name: P${{ matrix.php }} · L${{ matrix.laravel }} · ${{ matrix.stability }} · ${{ matrix.os }}
+    name: PHP ${{ matrix.php }} · Laravel ${{ matrix.laravel }} · ${{ matrix.stability }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -47,22 +54,20 @@ jobs:
           coverage: none
           ini-values: error_reporting=E_ALL
 
-      - name: Cache Composer packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/composer/files
-          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.laravel }}-${{ matrix.stability }}-${{ hashFiles('composer.json') }}
-          restore-keys: composer-${{ runner.os }}-${{ matrix.php }}-
+      - name: Pin the framework under test
+        run: >
+          composer require --dev --no-interaction --no-update
+          "laravel/framework:${{ matrix.laravel }}"
+          "orchestra/testbench:${{ matrix.testbench }}"
 
+      # Handles the Composer cache as well, keyed on the resolved dependencies.
       - name: Install dependencies
-        run: |
-          composer require \
-            "laravel/framework:${{ matrix.laravel }}" \
-            "orchestra/testbench:${{ matrix.testbench }}" \
-            --no-interaction --no-update
-          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+        uses: ramsey/composer-install@v4
+        with:
+          dependency-versions: ${{ matrix.stability == 'prefer-lowest' && 'lowest' || 'highest' }}
+          composer-options: --prefer-dist
 
-      - name: List installed versions
+      - name: List the resolved versions
         run: composer show --direct
 
       - name: Run tests

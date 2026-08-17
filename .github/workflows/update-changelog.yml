@@ -5,27 +5,39 @@ on:
     types: [released]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: changelog
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    # The only write this workflow needs: one commit to CHANGELOG.md on main.
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout the default branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
 
+      # changelog-updater-action rewrites the entry when the version is already
+      # present, so a re-published release updates rather than duplicates it.
       - name: Write the release notes into CHANGELOG.md
         uses: stefanzweifel/changelog-updater-action@v1
         with:
           latest-version: ${{ github.event.release.tag_name }}
           release-notes: ${{ github.event.release.body }}
+          compare-url-target-revision: ${{ github.event.release.tag_name }}
 
+      # A no-op when the entry was already there, so nothing is committed twice.
       - name: Commit the changelog
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
           commit_message: 'docs: update CHANGELOG for ${{ github.event.release.tag_name }}'
