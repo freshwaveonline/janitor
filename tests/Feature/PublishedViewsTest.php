@@ -21,12 +21,35 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/**
+ * Forget every view Blade has already resolved or compiled.
+ *
+ * Blade decides whether to recompile by comparing whole-second mtimes, and
+ * this whole file publishes to the same paths within a second or two. Without
+ * this, a test renders the copy an earlier test compiled — the same reason
+ * `php artisan view:clear` belongs after a real `vendor:publish`.
+ */
+function refreshViews(): void
+{
+    clearstatcache();
+    app('view')->flushFinderCache();
+    File::cleanDirectory((string) config('view.compiled'));
+}
+
 function publishViews(): string
 {
     test()->artisan('vendor:publish', ['--tag' => 'janitor-views', '--force' => true])->assertSuccessful();
-    app('view')->flushFinderCache();
+    refreshViews();
 
     return resource_path('views/vendor/janitor');
+}
+
+function writeView(string $path, string $contents): void
+{
+    File::ensureDirectoryExists(dirname($path));
+    File::put($path, $contents);
+
+    refreshViews();
 }
 
 beforeEach(function (): void {
@@ -38,6 +61,7 @@ beforeEach(function (): void {
 
 afterEach(function (): void {
     File::deleteDirectory(resource_path('views/vendor/janitor'));
+    refreshViews();
 });
 
 it('publishes every blade file the package ships', function (): void {
@@ -78,15 +102,13 @@ it('renders identically straight after publishing', function (): void {
 it('lets a published page replace the whole layout', function (): void {
     $directory = publishViews();
 
-    File::put($directory.'/error.blade.php', <<<'BLADE'
+    writeView($directory.'/error.blade.php', <<<'BLADE'
         <!DOCTYPE html>
         <html><body>
             <h1>{{ $error->statusCode }} at {{ $error->branding->name }}</h1>
             <p>{{ $error->message }}</p>
         </body></html>
         BLADE);
-
-    app('view')->flushFinderCache();
 
     $this->get('/missing')
         ->assertStatus(404)
@@ -97,8 +119,7 @@ it('lets a published page replace the whole layout', function (): void {
 it('lets a published partial be changed without touching the rest', function (): void {
     $directory = publishViews();
 
-    File::put($directory.'/partials/meta.blade.php', '<div class="my-meta">{{ $error->messageNumber }}</div>');
-    app('view')->flushFinderCache();
+    writeView($directory.'/partials/meta.blade.php', '<div class="my-meta">{{ $error->messageNumber }}</div>');
 
     $this->get('/missing')
         ->assertStatus(404)
@@ -114,9 +135,7 @@ it('lets a published partial be changed without touching the rest', function ():
 it('lets one status code get its own page', function (): void {
     $directory = publishViews();
 
-    File::makeDirectory($directory.'/errors', 0777, true, true);
-    File::put($directory.'/errors/404.blade.php', '<h1>Bespoke 404 — {{ $error->title }}</h1>');
-    app('view')->flushFinderCache();
+    writeView($directory.'/errors/404.blade.php', '<h1>Bespoke 404 — {{ $error->title }}</h1>');
 
     // The per-code view wins for a 404 …
     $this->get('/missing')->assertStatus(404)->assertSee('Bespoke 404 —');
@@ -129,8 +148,7 @@ it('keeps the published styles editable as plain CSS', function (): void {
     $directory = publishViews();
 
     $styles = File::get($directory.'/partials/styles.blade.php');
-    File::put($directory.'/partials/styles.blade.php', $styles."\n<style>.jn-card { border-radius: 0; }</style>");
-    app('view')->flushFinderCache();
+    writeView($directory.'/partials/styles.blade.php', $styles."\n<style>.jn-card { border-radius: 0; }</style>");
 
     $this->get('/missing')->assertSee('.jn-card { border-radius: 0; }', false);
 });
@@ -138,7 +156,7 @@ it('keeps the published styles editable as plain CSS', function (): void {
 it('gives published views the same $error context the package uses', function (): void {
     $directory = publishViews();
 
-    File::put($directory.'/error.blade.php', <<<'BLADE'
+    writeView($directory.'/error.blade.php', <<<'BLADE'
         <!DOCTYPE html><html><body>
         status={{ $error->statusCode }}
         title={{ $error->title }}
@@ -151,8 +169,7 @@ it('gives published views the same $error context the package uses', function ()
         </body></html>
         BLADE);
 
-    app('view')->flushFinderCache();
-
+    echo "\nRESOLVED: ".app('view')->getFinder()->find('janitor::error')."\n";
     $content = $this->get('/missing')->getContent();
 
     expect($content)->toContain('status=404')
