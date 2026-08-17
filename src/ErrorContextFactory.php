@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FreshwaveOnline\Janitor;
 
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use FreshwaveOnline\Janitor\Contracts\ActionResolver;
 use FreshwaveOnline\Janitor\Contracts\BrandingResolver;
 use FreshwaveOnline\Janitor\Contracts\ErrorContextBuilder;
@@ -52,8 +53,10 @@ class ErrorContextFactory implements ErrorContextBuilder
     {
         $statusCode ??= $this->statusCode($exception);
 
-        $branding = $this->branding->resolve($request, $statusCode);
-        $messageNumber = $this->messageNumbers->for($exception, $statusCode);
+        // Each collaborator is guarded on its own: a tenant lookup that cannot
+        // reach its database costs the branding, not the whole page.
+        $branding = Guard::value(fn (): Branding => $this->branding->resolve($request, $statusCode), new Branding);
+        $messageNumber = Guard::value(fn (): ?string => $this->messageNumbers->for($exception, $statusCode));
 
         $context = new ErrorContext(
             statusCode: $statusCode,
@@ -64,9 +67,9 @@ class ErrorContextFactory implements ErrorContextBuilder
             suggestions: $this->suggestions($statusCode, $branding),
             icon: Icons::forStatus($statusCode),
             messageNumber: $messageNumber,
-            requestId: $this->requestIds->resolve($request),
-            retryAt: $this->retryAfter->resolve($exception, $request),
-            details: $this->details($exception, $statusCode),
+            requestId: Guard::value(fn (): ?string => $this->requestIds->resolve($request)),
+            retryAt: Guard::value(fn (): ?CarbonInterface => $this->retryAfter->resolve($exception, $request)),
+            details: Guard::value(fn (): ?ExceptionDetails => $this->details($exception, $statusCode)),
             actions: [],
             branding: $branding,
             palette: Palette::fromConfig($branding->colors(), $this->theme()),
@@ -123,7 +126,7 @@ class ErrorContextFactory implements ErrorContextBuilder
             requestId: $context->requestId,
             retryAt: $context->retryAt,
             details: $context->details,
-            actions: $this->actions->for($context, $request),
+            actions: Guard::value(fn (): array => $this->actions->for($context, $request), []),
             branding: $context->branding,
             palette: $context->palette,
             theme: $context->theme,

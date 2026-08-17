@@ -32,6 +32,14 @@ use Throwable;
 class ErrorPageRenderer implements ErrorRenderer
 {
     /**
+     * Symfony's own JSON defaults, which Illuminate\Http\JsonResponse does not
+     * apply. An error body echoes back what the client sent — a URL, an abort()
+     * message — so keeping `<`, `>`, `&`, `'` and `"` out of the wire encoding
+     * means the body stays inert if anything ever renders it as HTML.
+     */
+    protected const JSON_OPTIONS = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+
+    /**
      * Wording for the fallback page, in English only: reaching it means the
      * translator is among the things that cannot be relied on.
      *
@@ -339,7 +347,7 @@ class ErrorPageRenderer implements ErrorRenderer
             $payload['exception'] = $context->details->toArray();
         }
 
-        return new JsonResponse($payload, $context->statusCode);
+        return new JsonResponse($payload, $context->statusCode, [], self::JSON_OPTIONS);
     }
 
     /**
@@ -365,7 +373,7 @@ class ErrorPageRenderer implements ErrorRenderer
         return new JsonResponse([
             'message' => $context->message,
             'janitor' => $this->livewirePayload($context),
-        ], $context->statusCode);
+        ], $context->statusCode, [], self::JSON_OPTIONS);
     }
 
     /**
@@ -459,7 +467,7 @@ class ErrorPageRenderer implements ErrorRenderer
         $wantsJson = Guard::value(static fn (): bool => $request->expectsJson(), false);
 
         if ($wantsJson) {
-            return new JsonResponse(['message' => $title, 'status' => $status], $status);
+            return new JsonResponse(['message' => $title, 'status' => $status], $status, [], self::JSON_OPTIONS);
         }
 
         $heading = htmlspecialchars((string) $status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

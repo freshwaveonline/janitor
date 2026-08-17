@@ -70,16 +70,17 @@ class ConfigBranding implements BrandingResolver
 
     protected function primaryColor(Request $request): ?string
     {
-        if ($this->inheritsFromFilament('primary_color', $request)) {
-            $shade = $this->integer('filament.color_shade', 600);
-            $panelColor = Filament::primaryColor($request, $shade);
+        $explicit = $this->string('colors.primary');
 
-            if ($panelColor !== null) {
-                return $panelColor;
-            }
+        if ($explicit !== null) {
+            return $explicit;
         }
 
-        return $this->string('colors.primary');
+        if ($this->inheritsFromFilament('primary_color', $request)) {
+            return Filament::primaryColor($request, $this->integer('filament.color_shade', 600));
+        }
+
+        return null;
     }
 
     protected function homeUrl(Request $request): ?string
@@ -111,15 +112,17 @@ class ConfigBranding implements BrandingResolver
 
     protected function loginUrl(Request $request): ?string
     {
-        if ($this->inheritsFromFilament('login_url', $request)) {
-            $url = Url::link(Filament::loginUrl($request));
+        $explicit = $this->route($this->string('links.login_route'));
 
-            if ($url !== null) {
-                return $url;
-            }
+        if ($explicit !== null) {
+            return $explicit;
         }
 
-        return $this->route($this->string('links.login_route'));
+        if ($this->inheritsFromFilament('login_url', $request)) {
+            return Url::link(Filament::loginUrl($request));
+        }
+
+        return null;
     }
 
     /**

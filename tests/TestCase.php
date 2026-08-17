@@ -16,13 +16,17 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         // Both keep static state; reset so one test cannot leak into the next.
-        Filament::fake(null);
+        // Filament is pinned to "absent" rather than left to class_exists():
+        // tests/Pest.php can make the stand-in classes loadable, and whether
+        // some earlier test happened to load them must not decide what the
+        // rest of the suite sees. FilamentBrandingTest opts in explicitly.
+        Filament::fake(false);
         Icons::flush();
     }
 
     protected function tearDown(): void
     {
-        Filament::fake(null);
+        Filament::fake(false);
         Icons::flush();
 
         parent::tearDown();

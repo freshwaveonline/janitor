@@ -241,7 +241,7 @@ class JanitorServiceProvider extends ServiceProvider
      */
     protected static function sectionOf(Application $app, string $key): array
     {
-        $config = $app->make(Config::class)->get('janitor.'.$key, []);
+        $config = Guard::value(static fn (): mixed => $app->make(Config::class)->get('janitor.'.$key, []), []);
 
         /** @var array<string, mixed> */
         return is_array($config) ? $config : [];

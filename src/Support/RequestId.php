@@ -48,7 +48,12 @@ class RequestId implements RequestIdResolver
 
     public function responseHeader(): ?string
     {
-        $header = $this->config['response_header'] ?? 'X-Request-Id';
+        // An explicit `null` means "do not echo the id back", which is what the
+        // config file documents — so distinguish it from an absent key rather
+        // than letting `??` fall through to the default.
+        $header = array_key_exists('response_header', $this->config)
+            ? $this->config['response_header']
+            : 'X-Request-Id';
 
         return is_string($header) && $header !== '' ? $header : null;
     }
