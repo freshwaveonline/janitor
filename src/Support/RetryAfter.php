@@ -124,7 +124,7 @@ class RetryAfter implements RetryAfterResolver
     }
 
     /**
-     * @param  array<string, mixed>  $headers
+     * @param  array<array-key, mixed>  $headers
      */
     private function fromHeaderBag(array $headers): ?CarbonInterface
     {

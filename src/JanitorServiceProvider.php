@@ -22,6 +22,7 @@ use FreshwaveOnline\Janitor\Support\RequestId;
 use FreshwaveOnline\Janitor\Support\RetryAfter;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -45,28 +46,19 @@ class JanitorServiceProvider extends ServiceProvider
         //
         // The concrete classes stay bound under their own names too, so you can
         // decorate the default rather than replace it.
-        $this->app->singleton(MessageNumber::class, function ($app): MessageNumber {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.message_number', []);
-
+        $this->app->singleton(MessageNumber::class, function (Application $app): MessageNumber {
             /** @phpstan-ignore-next-line argument.type */
-            return new MessageNumber($config, $app->basePath());
+            return new MessageNumber(self::sectionOf($app, 'message_number'), $app->basePath());
         });
 
-        $this->app->singleton(RequestId::class, function ($app): RequestId {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.request_id', []);
-
+        $this->app->singleton(RequestId::class, function (Application $app): RequestId {
             /** @phpstan-ignore-next-line argument.type */
-            return new RequestId($config);
+            return new RequestId(self::sectionOf($app, 'request_id'));
         });
 
-        $this->app->singleton(RetryAfter::class, function ($app): RetryAfter {
-            /** @var array<string, mixed> $config */
-            $config = $app->make(Config::class)->get('janitor.retry_after', []);
-
+        $this->app->singleton(RetryAfter::class, function (Application $app): RetryAfter {
             /** @phpstan-ignore-next-line argument.type */
-            return new RetryAfter($config);
+            return new RetryAfter(self::sectionOf($app, 'retry_after'));
         });
 
         $this->app->singleton(ConfigBranding::class);
@@ -210,7 +202,8 @@ class JanitorServiceProvider extends ServiceProvider
         }
 
         $config = $this->app->make(Config::class);
-        $path = trim((string) $config->get('janitor.preview.path', '_janitor'), '/');
+        $configured = $config->get('janitor.preview.path', '_janitor');
+        $path = trim(is_string($configured) ? $configured : '_janitor', '/');
 
         /** @var list<string> $middleware */
         $middleware = $config->get('janitor.preview.middleware', ['web']);
@@ -232,6 +225,20 @@ class JanitorServiceProvider extends ServiceProvider
         return $setting === null
             ? $this->app->environment('local')
             : $setting === true;
+    }
+
+    /**
+     * Read one `janitor.*` sub-array, tolerating a config repository that has
+     * been replaced or emptied.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function sectionOf(Application $app, string $key): array
+    {
+        $config = $app->make(Config::class)->get('janitor.'.$key, []);
+
+        /** @var array<string, mixed> */
+        return is_array($config) ? $config : [];
     }
 
     protected function registerBladeDirectives(): void

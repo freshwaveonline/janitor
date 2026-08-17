@@ -47,7 +47,7 @@ final class Filament
             return null;
         }
 
-        return self::guard(static function () use ($request) {
+        return self::guard(static function () use ($request): mixed {
             $facade = \Filament\Facades\Filament::class;
 
             $current = $facade::getCurrentPanel();
@@ -59,8 +59,8 @@ final class Filament
             if ($request !== null) {
                 $path = trim($request->path(), '/');
 
-                foreach ($facade::getPanels() as $panel) {
-                    $prefix = trim((string) $panel->getPath(), '/');
+                foreach (self::panels() as $panel) {
+                    $prefix = self::panelPath($panel);
 
                     if ($prefix !== '' && ($path === $prefix || str_starts_with($path, $prefix.'/'))) {
                         return $panel;
@@ -84,8 +84,8 @@ final class Filament
         return self::guard(static function () use ($request): bool {
             $path = trim($request->path(), '/');
 
-            foreach (\Filament\Facades\Filament::getPanels() as $panel) {
-                $prefix = trim((string) $panel->getPath(), '/');
+            foreach (self::panels() as $panel) {
+                $prefix = self::panelPath($panel);
 
                 if ($prefix === '') {
                     continue;
@@ -230,6 +230,34 @@ final class Filament
         }
 
         return self::guard(static fn (): bool => (bool) $panel->hasDarkMode());
+    }
+
+    /**
+     * Every registered panel, or an empty list when Filament hands back
+     * something we cannot walk.
+     *
+     * @return iterable<mixed>
+     */
+    private static function panels(): iterable
+    {
+        $panels = \Filament\Facades\Filament::getPanels();
+
+        return is_iterable($panels) ? $panels : [];
+    }
+
+    /**
+     * A panel's URL prefix, trimmed of slashes. Filament types this as a
+     * string, but a panel object from a future version may not.
+     */
+    private static function panelPath(mixed $panel): string
+    {
+        if (! is_object($panel) || ! method_exists($panel, 'getPath')) {
+            return '';
+        }
+
+        $path = $panel->getPath();
+
+        return is_string($path) ? trim($path, '/') : '';
     }
 
     /**

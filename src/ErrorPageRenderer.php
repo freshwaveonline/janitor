@@ -371,8 +371,22 @@ class ErrorPageRenderer implements ErrorRenderer
         // Retry-After — dropping those would change the HTTP semantics.
         if ($exception instanceof HttpExceptionInterface) {
             foreach ($exception->getHeaders() as $name => $value) {
-                if (is_string($name) && (is_string($value) || is_array($value))) {
+                if (! is_string($name)) {
+                    continue;
+                }
+
+                if (is_string($value)) {
                     $response->headers->set($name, $value);
+
+                    continue;
+                }
+
+                if (is_array($value)) {
+                    $values = array_values(array_filter($value, 'is_string'));
+
+                    if ($values !== []) {
+                        $response->headers->set($name, $values);
+                    }
                 }
             }
         }

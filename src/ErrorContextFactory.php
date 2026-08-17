@@ -226,7 +226,7 @@ class ErrorContextFactory implements ErrorContextBuilder
             return $fallback;
         }
 
-        $maxLength = (int) ($this->setting('messages.max_exception_message_length') ?? 300);
+        $maxLength = $this->intSetting('messages.max_exception_message_length', 300);
 
         return mb_strlen($message) > $maxLength ? $fallback : $message;
     }
@@ -285,7 +285,7 @@ class ErrorContextFactory implements ErrorContextBuilder
         return ExceptionDetails::fromThrowable(
             $exception,
             $this->app->basePath(),
-            (int) ($this->setting('details.stack_frames') ?? 12),
+            $this->intSetting('details.stack_frames', 12),
         );
     }
 
@@ -310,6 +310,13 @@ class ErrorContextFactory implements ErrorContextBuilder
     protected function setting(string $key, mixed $default = null): mixed
     {
         return $this->config->get('janitor.'.$key, $default);
+    }
+
+    protected function intSetting(string $key, int $default): int
+    {
+        $value = $this->setting($key);
+
+        return is_int($value) ? $value : $default;
     }
 
     protected function stringSetting(string $key): ?string

@@ -53,7 +53,7 @@ class PreviewController
 
         return $this->views->make('janitor::preview', [
             'contexts' => $contexts,
-            'basePath' => trim((string) $this->config->get('janitor.preview.path', '_janitor'), '/'),
+            'basePath' => $this->basePath(),
         ]);
     }
 
@@ -78,6 +78,13 @@ class PreviewController
         return new Response(
             $this->views->make($this->renderer->viewName($code), ['error' => $context])->render()
         );
+    }
+
+    private function basePath(): string
+    {
+        $configured = $this->config->get('janitor.preview.path', '_janitor');
+
+        return trim(is_string($configured) ? $configured : '_janitor', '/');
     }
 
     /**

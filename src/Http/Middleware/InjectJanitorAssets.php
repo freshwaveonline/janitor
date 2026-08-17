@@ -36,15 +36,19 @@ class InjectJanitorAssets
 
         $content = $response->getContent();
 
-        if (! is_string($content) || ! str_contains($content, '</body>')) {
+        if (! is_string($content)) {
+            return $response;
+        }
+
+        // Inject before the final closing tag only: a nested `</body>` inside a
+        // code sample on the page must not swallow the script.
+        $position = strripos($content, '</body>');
+
+        if ($position === false) {
             return $response;
         }
 
         $script = $this->views->make('janitor::partials.livewire-script')->render();
-
-        // Replace the final closing tag only: a nested `</body>` inside a code
-        // sample on the page must not swallow the script.
-        $position = strripos($content, '</body>');
 
         $response->setContent(
             substr($content, 0, $position).$script.substr($content, $position)

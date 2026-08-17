@@ -57,24 +57,27 @@ final class Branding implements Arrayable
     /**
      * Copy this branding with a few values replaced — handy when decorating the
      * default resolver instead of replacing it wholesale.
+     *
+     * Overrides are passed as named arguments (`$branding->with(name: 'Acme')`).
+     * A value of the wrong type is ignored rather than fatal: this runs while
+     * the application is already failing.
      */
     public function with(mixed ...$overrides): self
     {
-        /** @var array<string, mixed> $overrides */
         return new self(
-            name: $overrides['name'] ?? $this->name,
-            logo: $overrides['logo'] ?? $this->logo,
-            logoDark: $overrides['logoDark'] ?? $this->logoDark,
-            logoHeight: $overrides['logoHeight'] ?? $this->logoHeight,
-            showNameBesideLogo: $overrides['showNameBesideLogo'] ?? $this->showNameBesideLogo,
-            primaryColor: $overrides['primaryColor'] ?? $this->primaryColor,
-            primaryColorLight: $overrides['primaryColorLight'] ?? $this->primaryColorLight,
-            primaryColorDark: $overrides['primaryColorDark'] ?? $this->primaryColorDark,
-            autoContrast: $overrides['autoContrast'] ?? $this->autoContrast,
-            homeUrl: $overrides['homeUrl'] ?? $this->homeUrl,
-            loginUrl: $overrides['loginUrl'] ?? $this->loginUrl,
-            supportEmail: $overrides['supportEmail'] ?? $this->supportEmail,
-            statusPageUrl: $overrides['statusPageUrl'] ?? $this->statusPageUrl,
+            name: $this->overrideString($overrides, 'name', $this->name),
+            logo: $this->overrideString($overrides, 'logo', $this->logo),
+            logoDark: $this->overrideString($overrides, 'logoDark', $this->logoDark),
+            logoHeight: $this->overrideInt($overrides, 'logoHeight', $this->logoHeight),
+            showNameBesideLogo: $this->overrideBool($overrides, 'showNameBesideLogo', $this->showNameBesideLogo),
+            primaryColor: $this->overrideString($overrides, 'primaryColor', $this->primaryColor),
+            primaryColorLight: $this->overrideString($overrides, 'primaryColorLight', $this->primaryColorLight),
+            primaryColorDark: $this->overrideString($overrides, 'primaryColorDark', $this->primaryColorDark),
+            autoContrast: $this->overrideBool($overrides, 'autoContrast', $this->autoContrast),
+            homeUrl: $this->overrideString($overrides, 'homeUrl', $this->homeUrl),
+            loginUrl: $this->overrideString($overrides, 'loginUrl', $this->loginUrl),
+            supportEmail: $this->overrideString($overrides, 'supportEmail', $this->supportEmail),
+            statusPageUrl: $this->overrideString($overrides, 'statusPageUrl', $this->statusPageUrl),
         );
     }
 
@@ -95,5 +98,35 @@ final class Branding implements Arrayable
             'support_email' => $this->supportEmail,
             'status_page_url' => $this->statusPageUrl,
         ];
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $overrides
+     */
+    private function overrideString(array $overrides, string $key, ?string $current): ?string
+    {
+        $value = $overrides[$key] ?? null;
+
+        return is_string($value) ? $value : $current;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $overrides
+     */
+    private function overrideInt(array $overrides, string $key, int $current): int
+    {
+        $value = $overrides[$key] ?? null;
+
+        return is_int($value) ? $value : $current;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $overrides
+     */
+    private function overrideBool(array $overrides, string $key, bool $current): bool
+    {
+        $value = $overrides[$key] ?? null;
+
+        return is_bool($value) ? $value : $current;
     }
 }

@@ -28,7 +28,7 @@ class ConfigBranding implements BrandingResolver
             name: $this->name($request),
             logo: $this->logo($request),
             logoDark: $this->string('brand.logo_dark'),
-            logoHeight: (int) ($this->setting('brand.logo_height') ?? 32),
+            logoHeight: $this->integer('brand.logo_height', 32),
             showNameBesideLogo: $this->setting('brand.show_name_beside_logo') === true,
             primaryColor: $this->primaryColor($request),
             primaryColorLight: $this->string('colors.light'),
@@ -71,7 +71,7 @@ class ConfigBranding implements BrandingResolver
     protected function primaryColor(Request $request): ?string
     {
         if ($this->inheritsFromFilament('primary_color', $request)) {
-            $shade = (int) ($this->setting('filament.color_shade') ?? 600);
+            $shade = $this->integer('filament.color_shade', 600);
             $panelColor = Filament::primaryColor($request, $shade);
 
             if ($panelColor !== null) {
@@ -167,5 +167,12 @@ class ConfigBranding implements BrandingResolver
         $value = $this->setting($key);
 
         return is_string($value) && trim($value) !== '' ? trim($value) : null;
+    }
+
+    protected function integer(string $key, int $default): int
+    {
+        $value = $this->setting($key);
+
+        return is_int($value) ? $value : $default;
     }
 }
